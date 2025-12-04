@@ -1,0 +1,38 @@
+<?php
+declare(strict_types=1);
+
+namespace Texyla;
+
+class TexylaConfigFactory
+{
+    public static function getContextSetup(string $context): array
+    {
+        $configFile = __DIR__ . '/../config.php';
+        $markers = [];
+        
+        if (file_exists($configFile)) {
+            $fullConfig = require $configFile;
+            $markers = $fullConfig['texyla'][$context] ?? $fullConfig['texyla']['default'] ?? [];
+        }
+
+        $texyObject = self::createTexyForContext($context);
+        
+        $jsonConfig = htmlspecialchars(
+            json_encode($markers, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT),
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+        
+        return [$texyObject, $jsonConfig];
+    }
+    
+private static function createTexyForContext(string $context): \Texy\Texy
+{
+    // Pokud máme TexylaTexyFactory, použij ji
+    if (class_exists('Texyla\TexylaTexyFactory')) {
+        return \Texyla\TexylaTexyFactory::createForContext($context);
+    }
+    
+    // Fallback na starý způsob
+    return self::createTexyLegacy($context);
+}}

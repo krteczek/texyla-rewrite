@@ -1,0 +1,214 @@
+/**
+ * Project: Texyla Rewrite Dream Team
+ * File: /texyla-rewrite/assets/style.css
+ * Description: Styly pro Texyla editor - BEM metodologie
+ */
+
+/* === ZÁKLADNÍ KOMPONENTA === */
+.texyla {
+    position: relative;
+    margin-top: 15px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Textarea a preview sdílejí rozměry */
+.texyla textarea,
+.texyla__preview {
+    width: 100%;
+    min-height: 250px;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+.texyla textarea:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* === TOOLBAR === */
+.texyla__toolbar {
+    margin-bottom: 8px;
+    background: #f7fafc;
+    padding: 8px;
+    border-radius: 6px;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+/* TLAČÍTKA */
+.texyla__button {
+    background: white;
+    border: 2px solid #cbd5e0;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+    min-width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.texyla__button:hover {
+    background: #edf2f7;
+    border-color: #a0aec0;
+    transform: translateY(-1px);
+}
+
+.texyla__button:active {
+    transform: translateY(0);
+}
+
+.texyla__button--preview {
+    margin-left: auto;
+    background: #4299e1;
+    color: white;
+    border-color: #3182ce;
+}
+
+.texyla__button--preview:hover {
+    background: #3182ce;
+}
+
+.texyla__button--active {
+    background: #38a169 !important;
+    border-color: #2f855a !important;
+}
+
+/* EMOJI TLAČÍTKA */
+.texyla__button {
+    font-size: 18px; /* Větší emoji */
+}
+
+/* === NÁHLED === */
+.texyla__preview {
+    background-color: #f8fafc;
+    overflow: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    display: none; /* Výchozí skrytý */
+}
+
+/* Loading stav */
+.texyla__preview--loading {
+    opacity: 0.7;
+    position: relative;
+}
+
+.texyla__preview--loading::after {
+    content: "⏳ Načítám náhled...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #718096;
+    font-style: italic;
+    background: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Chybová hláška */
+.texyla__error {
+    background: #fed7d7;
+    border-left: 4px solid #fc8181;
+    padding: 16px;
+    color: #742a2a;
+    border-radius: 4px;
+}
+
+/* === STYLY PRO TEXT UVNITŘ NÁHLEDU === */
+.texyla__preview h1,
+.texyla__preview h2,
+.texyla__preview h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: #2d3748;
+}
+
+.texyla__preview h1 { font-size: 2em; }
+.texyla__preview h2 { font-size: 1.5em; }
+.texyla__preview h3 { font-size: 1.17em; }
+
+.texyla__preview p {
+    margin-bottom: 1em;
+}
+
+.texyla__preview strong {
+    font-weight: bold;
+    color: #2d3748;
+}
+
+.texyla__preview em {
+    font-style: italic;
+}
+
+.texyla__preview blockquote {
+    border-left: 4px solid #cbd5e0;
+    padding-left: 16px;
+    margin-left: 0;
+    color: #4a5568;
+    font-style: italic;
+}
+
+.texyla__preview pre {
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.texyla__preview code {
+    background: #edf2f7;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.texyla__preview ul,
+.texyla__preview ol {
+    padding-left: 24px;
+    margin-bottom: 1em;
+}
+
+.texyla__preview li {
+    margin-bottom: 4px;
+}
+
+/* === RESPONZIVITA === */
+@media (max-width: 768px) {
+    .texyla__toolbar {
+        flex-wrap: wrap;
+    }
+    
+    .texyla__button {
+        min-width: 40px;
+        height: 40px;
+        padding: 6px 8px;
+        font-size: 16px;
+    }
+    
+    .texyla textarea,
+    .texyla__preview {
+        min-height: 200px;
+        font-size: 15px;
+    }
+}

@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+
+namespace Texyla;
+
+class TexylaImplementation
+{
+    public function getCleanInstance(): \Texy\Texy
+    {
+        $texy = new \Texy\Texy();
+        
+        // Bezpečné výchozí nastavení pro Texy! 3.2
+        $texy->allowed = [
+            'phrase/strong' => true,
+            'phrase/em' => true,
+            'phrase/code' => true,
+            'image' => false,
+            'link' => true,
+            'block/code' => false,
+        ];
+        
+        return $texy;
+    }
+}
