@@ -1,8 +1,9 @@
+
 <?php
 /**
  * Project: Texyla Rewrite Dream Team
  * File: /texyla-rewrite/demo/index.php
- * Description: Demo stránka s 2 editory - automatická konfigurace podle Texy
+ * Description: Demo stránka s 2 editory - 100% automatická konfigurace podle Texy
  * 
  * @package Texyla
  * @author Dream Team (Petr & Bó)
@@ -54,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Texyla Demo – Automatická konfigurace</title>
-    <meta name="description" content="Ukázka automaticky konfigurované Texyly podle Texy">
+    <title>Texyla Demo – 100% Automatická konfigurace</title>
+    <meta name="description" content="Editor se konfiguruje automaticky z Texy instance">
     
     <!-- Styly Texyla editoru -->
     <link rel="stylesheet" href="../assets/style.css">
@@ -234,6 +235,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid #e2e8f0;
         }
         
+        /* Texyla FATÁLNÍ CHYBY */
+        .texyla-fatal-error {
+            position: relative;
+            z-index: 10000;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            border: 3px solid #fc8181;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(252, 129, 129, 0.3);
+        }
+        
+        .texyla-error-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .texyla-error-box h3 {
+            color: #c53030;
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            border-bottom: 2px solid #fed7d7;
+            padding-bottom: 0.5rem;
+        }
+        
+        .texyla-error-message {
+            font-size: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #fff5f5;
+            border-radius: 0.375rem;
+            border-left: 4px solid #fc8181;
+        }
+        
+        .texyla-error-details {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: #742a2a;
+            background: #fed7d7;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        .texyla-error-fix {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f0fff4;
+            border-radius: 0.375rem;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .texyla-error-fix h4 {
+            color: #276749;
+            margin: 0 0 0.75rem 0;
+        }
+        
+        .texyla-error-fix ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .texyla-error-fix li {
+            margin-bottom: 0.5rem;
+            color: #2f855a;
+        }
+        
+        .texyla-error-url {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: #ebf8ff;
+            border-radius: 0.375rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
         /* Responzivní */
         @media (max-width: 768px) {
             body {
@@ -257,15 +337,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <!-- Hlavička -->
     <header class="demo-header">
-        <h1>🚀 Texyla - Automatická konfigurace</h1>
-        <p class="subtitle">Editor se nakonfiguruje sám podle Texy nastavení</p>
+        <h1>🚀 Texyla - 100% Automatická konfigurace</h1>
+        <p class="subtitle">Žádný config.php! Editor se konfiguruje sám z Texy instance</p>
         <div class="dream-team-badge">Petr & Bó Dream Team</div>
         <p>Každý editor má jinou konfiguraci automaticky vygenerovanou z Texy instance.</p>
     </header>
 
     <!-- Debug panel -->
     <div class="debug-panel">
-        <h3>🔍 DEBUG: Rozdíly v konfiguracích</h3>
+        <h3>🔍 DEBUG: Automaticky generované konfigurace</h3>
         <div class="debug-item">
             <strong>Admin config</strong> (délka: <?= strlen($jsonConfigAdmin) ?> znaků)<br>
             <small><?= htmlspecialchars(substr($jsonConfigAdmin, 0, 150)) ?>...</small>
@@ -273,6 +353,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="debug-item">
             <strong>Forum config</strong> (délka: <?= strlen($jsonConfigForum) ?> znaků)<br>
             <small><?= htmlspecialchars(substr($jsonConfigForum, 0, 150)) ?>...</small>
+        </div>
+        <div class="debug-item">
+            <strong>Statistika:</strong><br>
+            Admin: <?= count(json_decode($jsonConfigAdmin, true) ?: []) ?> tlačítek<br>
+            Forum: <?= count(json_decode($jsonConfigForum, true) ?: []) ?> tlačítek
         </div>
     </div>
 
@@ -286,20 +371,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </h2>
             
             <div class="demo-instructions">
-                <h3>📋 Automaticky vygenerované tlačítka:</h3>
-                <ul>
-                    <li><strong>B</strong> – **tučné** (phrase/strong)</li>
-                    <li><strong>I</strong> – *kurzíva* (phrase/em)</li>
-                    <li><strong>`</strong> – `inline kód` (phrase/code)</li>
-                    <li><strong>🖼️</strong> – [* obrázek *] (image)</li>
-                    <li><strong>🔗</strong> – [odkaz](url) (link/reference)</li>
-                    <li><strong></></strong> – ```blok kódu``` (block/code)</li>
-                    <li><strong>💬</strong> – > citace (block/quote)</li>
-                    <li><strong>H3</strong> – ### nadpis (heading/surrounded)</li>
-                    <li><strong>•</strong> – - seznam (list)</li>
-                    <li><strong>┃</strong> – | tabulka | (table)</li>
-                    <li><strong>―</strong> – --- (horizline)</li>
-                </ul>
+                <h3>📋 Automaticky vygenerované tlačítka z Texy:</h3>
+                <?php
+                $adminButtons = json_decode($jsonConfigAdmin, true) ?: [];
+                if (!empty($adminButtons)): 
+                ?>
+                    <ul>
+                        <?php foreach ($adminButtons as $button): ?>
+                            <li>
+                                <strong><?= htmlspecialchars($button['label'] ?? '?') ?></strong> – 
+                                <?= htmlspecialchars($button['title'] ?? $button['marker'] ?? '') ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p style="color: #c53030;">⚠️ Žádná tlačítka - Texy! není správně nakonfigurována</p>
+                <?php endif; ?>
             </div>
             
             <label for="editor1" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
@@ -335,111 +422,111 @@ class Ukazka {
         return 'Hello World!';
     }
 }
-```
 Citace
-text
 
-„Software je jako sex: je lepší, když je zdarma.\"
+„Software je jako sex: je lepší, když je zdarma."
 – Linus Torvalds
-
 Seznamy
-text
 
-První položka
+    První položka
 
-Druhá položka
+    Druhá položka
 
-    Vnořená položka
+        Vnořená položka
 
-Třetí položka
+    Třetí položka
 
 Číslovaný seznam
 
-Druhá položka
+    První položka
 
-Třetí položka") ?></textarea>
+    Druhá položka
 
-        <!-- Náhled -->
-        <div class="texyla__preview" data-for="editor1" aria-live="polite"></div>
+    Třetí položka") ?></textarea>
+ <!-- Náhled -->
+ <div class="texyla__preview" data-for="editor1" aria-live="polite"></div>
 
-        <!-- Výsledek zpracování -->
-        <?php if (isset($processedOutput['admin'])): ?>
-            <div class="result-box">
-                <h3>✅ Výsledek zpracování na serveru:</h3>
-                <div style="margin: 1rem 0; padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid #cbd5e0;">
-                    <?= $processedOutput['admin'] ?>
-                </div>
-                <details>
-                    <summary style="cursor: pointer; color: #4299e1; font-weight: 500;">
-                        📄 Zobrazit HTML zdroj
-                    </summary>
-                    <pre><?= htmlspecialchars($processedOutput['admin']) ?></pre>
-                </details>
-            </div>
-        <?php endif; ?>
-    </section>
+ <!-- Výsledek zpracování -->
+ <?php if (isset($processedOutput['admin'])): ?>
+     <div class="result-box">
+         <h3>✅ Výsledek zpracování na serveru:</h3>
+         <div style="margin: 1rem 0; padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid #cbd5e0;">
+             <?= $processedOutput['admin'] ?>
+         </div>
+         <details>
+             <summary style="cursor: pointer; color: #4299e1; font-weight: 500;">
+                 📄 Zobrazit HTML zdroj
+             </summary>
+             <pre><?= htmlspecialchars($processedOutput['admin']) ?></pre>
+         </details>
+     </div>
+ <?php endif; ?>
+ </section>
 
-    <!-- EDITOR 2: FORUM (omezená syntaxe) -->
-    <section class="demo-section">
-        <h2>
-            💬 Editor: Diskuze / Forum
-            <span class="context-badge">context: '<?= htmlspecialchars($contextForum) ?>'</span>
-        </h2>
-        
-        <div class="demo-instructions">
-            <h3>⚠️ Omezená syntaxe (automaticky vyfiltrovaná):</h3>
-            <ul>
-                <li><strong>B</strong> – **tučné** (phrase/strong)</li>
-                <li><strong>I</strong> – *kurzíva* (phrase/em)</li>
-                <li><strong>`</strong> – `inline kód` (phrase/code)</li>
-                <li><strong>🔗</strong> – [odkaz](url) (link/reference)</li>
-                <li><strong>💬</strong> – > citace (block/quote)</li>
-                <li><strong>•</strong> – - seznam (list)</li>
-            </ul>
-            <p><em>Obrázky, tabulky, bloky kódu a nadpisy jsou automaticky zakázány.</em></p>
-        </div>
-        
-        <label for="editor2" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
-            Váš komentář:
-        </label>
-        
-               <textarea 
-            id="editor2" 
-            name="content_forum" 
-            class="texyla-textarea"
-            rows="8"
-            data-context="<?= htmlspecialchars($contextForum) ?>"
-            data-texyla-config="<?= $jsonConfigForum ?>"
-            aria-label="Editor pro diskuse s omezenou syntaxí"
-        ><?= htmlspecialchars($originalInput['forum'] ?? "**Dobrý den**, 
-
-mám dotaz ohledně funkčnosti editoru:
+ <!-- EDITOR 2: FORUM (omezená syntaxe) -->
+ <section class="demo-section">
+     <h2>
+         💬 Editor: Diskuze / Forum
+         <span class="context-badge">context: '<?= htmlspecialchars($contextForum) ?>'</span>
+     </h2>
+     
+     <div class="demo-instructions">
+         <h3>⚠️ Omezená syntaxe (automaticky vyfiltrovaná):</h3>
+         <?php
+         $forumButtons = json_decode($jsonConfigForum, true) ?: [];
+         if (!empty($forumButtons)): 
+         ?>
+             <ul>
+                 <?php foreach ($forumButtons as $button): ?>
+                     <li>
+                         <strong><?= htmlspecialchars($button['label'] ?? '?') ?></strong> – 
+                         <?= htmlspecialchars($button['title'] ?? $button['marker'] ?? '') ?>
+                     </li>
+                 <?php endforeach; ?>
+             </ul>
+         <?php else: ?>
+             <p style="color: #c53030;">⚠️ Žádná tlačítka - Texy! není správně nakonfigurována</p>
+         <?php endif; ?>
+     </div>
+     
+     <label for="editor2" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+         Váš komentář:
+     </label>
+     
+     <textarea 
+         id="editor2" 
+         name="content_forum" 
+         class="texyla-textarea"
+         rows="8"
+         data-context="<?= htmlspecialchars($contextForum) ?>"
+         data-texyla-config="<?= $jsonConfigForum ?>"
+         aria-label="Editor pro diskuse s omezenou syntaxí"
+     ><?= htmlspecialchars($originalInput['forum'] ?? "**Dobrý den**, 
+     mám dotaz ohledně funkčnosti editoru:
 
     Cituji předchozí příspěvek na toto téma.
 
 Mohu používat i inline kód jako echo 'test';.
 
 Děkuji za odpověď!") ?></textarea>
-text
+    <!-- Náhled -->
+    <div class="texyla__preview" data-for="editor2" aria-live="polite"></div>
 
-        <!-- Náhled -->
-        <div class="texyla__preview" data-for="editor2" aria-live="polite"></div>
-
-        <!-- Výsledek zpracování -->
-        <?php if (isset($processedOutput['forum'])): ?>
-            <div class="result-box">
-                <h3>✅ Výsledek zpracování na serveru:</h3>
-                <div style="margin: 1rem 0; padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid #cbd5e0;">
-                    <?= $processedOutput['forum'] ?>
-                </div>
-                <details>
-                    <summary style="cursor: pointer; color: #4299e1; font-weight: 500;">
-                        📄 Zobrazit HTML zdroj
-                    </summary>
-                    <pre><?= htmlspecialchars($processedOutput['forum']) ?></pre>
-                </details>
+    <!-- Výsledek zpracování -->
+    <?php if (isset($processedOutput['forum'])): ?>
+        <div class="result-box">
+            <h3>✅ Výsledek zpracování na serveru:</h3>
+            <div style="margin: 1rem 0; padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid #cbd5e0;">
+                <?= $processedOutput['forum'] ?>
             </div>
-        <?php endif; ?>
+            <details>
+                <summary style="cursor: pointer; color: #4299e1; font-weight: 500;">
+                    📄 Zobrazit HTML zdroj
+                </summary>
+                <pre><?= htmlspecialchars($processedOutput['forum']) ?></pre>
+            </details>
+        </div>
+    <?php endif; ?>
     </section>
 
     <!-- Tlačítko pro odeslání -->
@@ -455,38 +542,53 @@ text
         const previewEndpoint = '../src/TexylaController.php';
         const editors = document.querySelectorAll('.texyla-textarea');
         
-        console.info(`Inicializace ${editors.length} Texyla editorů...`);
+        console.info(`🚀 Inicializace ${editors.length} Texyla editorů (automatická konfigurace)...`);
         
         editors.forEach((textareaEl, index) => {
             try {
                 const editor = new TexylaVanilla(textareaEl, previewEndpoint);
-                console.debug(`Editor #${index + 1} inicializován: ${textareaEl.id}`);
+                console.debug(`✅ Editor #${index + 1} inicializován: ${textareaEl.id}`);
                 
                 // Debug: zobrazit config
                 const config = JSON.parse(textareaEl.dataset.texylaConfig || '[]');
-                console.log(`Editor ${textareaEl.id} má ${config.length} tlačítek:`, 
+                console.log(`📋 Editor ${textareaEl.id} má ${config.length} tlačítek:`, 
                     config.map(b => b.label).join(', '));
                     
             } catch (error) {
-                console.error(`Chyba při inicializaci editoru #${index + 1}:`, error);
+                console.error(`❌ Chyba při inicializaci editoru #${index + 1}:`, error);
                 textareaEl.style.borderColor = '#dc2626';
                 textareaEl.title = `Chyba: ${error.message}`;
+                
+                // Zobrazit uživatelsky přívětivou chybu
+                if (error.message.includes('Není nastavena konfigurace')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'texyla-fatal-error';
+                    errorDiv.innerHTML = `
+                        <div class="texyla-error-box">
+                            <h3>⚠️ Texyla: Chybí konfigurace</h3>
+                            <div class="texyla-error-message">
+                                Editor <strong>${textareaEl.id}</strong> není nakonfigurován.<br>
+                                <small>Použij <code>TexylaConfigFactory</code> pro automatickou konfiguraci z Texy.</small>
+                            </div>
+                        </div>
+                    `;
+                    textareaEl.parentNode.insertBefore(errorDiv, textareaEl);
+                }
             }
         });
         
-        console.info('Všechny editory úspěšně inicializovány.');
+        console.info('🎉 Všechny editory úspěšně inicializovány pomocí automatické konfigurace.');
     });
 </script>
 
 <!-- Patička -->
-<footer class="footer-info">
-    <p>© <?= date('Y') ?> Texyla Rewrite Dream Team | Automatická konfigurace v1.0</p>
+<footer class="footer-info" style="text-align: center; margin-top: 3rem; color: #718096;">
+    <p>© <?= date('Y') ?> Texyla Rewrite Dream Team | 100% Automatická konfigurace v1.0</p>
     <p>
         <small>
             PHP <?= phpversion() ?> | Texy! <?= \Texy\Texy::VERSION ?? '3.x' ?> | 
-            Configy generovány automaticky z Texy instance
+            Žádný config.php - vše generováno automaticky z Texy instance
         </small>
     </p>
 </footer>
-
-</body> </html> 
+</body> </html>
