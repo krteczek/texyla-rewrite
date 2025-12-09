@@ -489,4 +489,18 @@ text
     </p>
 </footer>
 
-</body> </html> 
+</body> </html> ```
+🎯 KLÍČOVÉ ZMĚNY:
+
+    Opravené načítání configů - každý editor má svůj config
+
+    Debug panel - ukazuje rozdíly mezi konfiguracemi
+
+    Podrobné instrukce - co je v každém editoru povoleno
+
+    Automatické popisy - které Texy syntaxe generují která tlačítka
+
+    Konzistentní data - správné přiřazení context → config
+
+Teď má demo 2 skutečně různé editory s automaticky generovanými konfiguracemi! 🚀
+

@@ -203,18 +203,18 @@ class TexylaVanilla {
      * 
      * @private
      */
-_addMarkerButtons() {
-    this._markers.forEach((item, index) => {
-        const button = this._createToolbarButton(
-            item.label || `Btn${index}`,
-            item.title || '',
-            item.marker || '',
-            'marker',
-            item.class || '' // NOVÉ: CSS třída
-        );
-        this._toolbar.appendChild(button);
-    });
-}    
+    _addMarkerButtons() {
+        this._markers.forEach((item, index) => {
+            const button = this._createToolbarButton(
+                item.label || `Btn${index}`,
+                item.title || '',
+                item.marker || '',
+                'marker'
+            );
+            this._toolbar.appendChild(button);
+        });
+    }
+    
     /**
      * Přidá tlačítko pro přepínání náhledu
      * 

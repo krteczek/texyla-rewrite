@@ -1,16 +1,3 @@
-<?php
-/**
- * Project: Texyla Rewrite Dream Team
- * File: /texyla-rewrite/config.php
- * Description: Konfigurace tlačítek pro Texyla Editor s emoji ikonami
- * 
- * @package Texyla
- * @author Dream Team (Petr & Bó)
- * @license MIT
- */
-
-declare(strict_types=1);
-
 return [
     'texyla' => [
         'admin' => [
