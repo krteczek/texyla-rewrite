@@ -7,6 +7,7 @@
  * @package Texyla
  * @author Dream Team (Petr & Bó)
  * @license MIT
+ * @version 1.1.0
  */
 
 declare(strict_types=1);
@@ -20,6 +21,7 @@ namespace Texyla;
  * 1. Čte co Texy umí ($texy->allowed[])
  * 2. Automaticky generuje toolbar tlačítka
  * 3. Vytváří JSON konfiguraci pro Texylu
+ * 4. Podporuje dialogová tlačítka pro komplexní syntaxe
  */
 class TexylaConfigFactory
 {
@@ -33,7 +35,7 @@ class TexylaConfigFactory
             'label' => 'B', 
             'marker' => '**', 
             'class' => 'texyla-bold',
-            'title' => 'Tučné',
+            'title' => 'Tučné (Ctrl+B)',
             'group' => 'inline',
             'priority' => 100
         ],
@@ -41,7 +43,7 @@ class TexylaConfigFactory
             'label' => 'I', 
             'marker' => '*', 
             'class' => 'texyla-italic',
-            'title' => 'Kurzíva (*)', 
+            'title' => 'Kurzíva (*) (Ctrl+I)', 
             'group' => 'inline',
             'priority' => 90
         ],
@@ -91,13 +93,14 @@ class TexylaConfigFactory
         ],
         
         // === ODKAZY ===
-        'link/reference' => [         // [odkaz](url) - referenční odkazy
+        'link/reference' => [         // [odkaz](url)
             'label' => '🔗', 
-            'marker' => '[]', 
+            'marker' => 'DIALOG:link', // Dialog místo markeru
             'class' => 'texyla-link',
-            'title' => 'Vložit odkaz',
-            'group' => 'links',
-            'priority' => 200
+            'title' => 'Vložit odkaz (Ctrl+K)',
+            'group' => 'dialogs',
+            'priority' => 200,
+            'dialog' => 'link'
         ],
         'link/email' => [             // email@example.com (automatické)
             'label' => '📧', 
@@ -123,41 +126,24 @@ class TexylaConfigFactory
             'priority' => 188,
             'hidden' => true          // nezobrazovat v toolbaru
         ],
-			 // Změnit config, aby obsahovala dialog tlačítka
-			// Přidat do TexylaConfigFactory nové položky:
-			'dialog/link' => [
-			    'label' => '🔗',
-			    'dialog' => 'link',  // místo markeru
-			    'title' => 'Vložit odkaz',
-			    'group' => 'dialogs'
-			],
-			'dialog/image' => [
-			    'label' => '🖼️',
-			    'dialog' => 'image',
-			    'title' => 'Vložit obrázek', 
-			    'group' => 'dialogs'
-			],
-			'dialog/heading' => [
-			    'label' => 'H',
-			    'dialog' => 'heading',
-			    'title' => 'Vložit nadpis',
-			    'group' => 'dialogs'
-			],       
+        
         // === OBRAZKY ===
         'image' => [                  // [* obrázek *]
             'label' => '🖼️', 
-            'marker' => '[*]', 
+            'marker' => 'DIALOG:image', // Dialog místo markeru
             'class' => 'texyla-image',
             'title' => 'Vložit obrázek',
-            'group' => 'media',
-            'priority' => 300
+            'group' => 'dialogs',
+            'priority' => 300,
+            'dialog' => 'image'
         ],
         'figure' => [                 // obrázek s popiskou (rozšíření image)
             'label' => '🖼️💬', 
-            'marker' => '[*]',        // stejný marker jako image
+            'marker' => 'DIALOG:image', // stejný dialog jako image
             'title' => 'Obrázek s popiskou',
-            'group' => 'media',
-            'priority' => 290
+            'group' => 'dialogs',
+            'priority' => 290,
+            'dialog' => 'image'
         ],
         
         // === BLOKOVÉ ELEMENTY ===
@@ -169,6 +155,14 @@ class TexylaConfigFactory
             'group' => 'blocks',
             'priority' => 400
         ],
+        'block/code-language' => [    // /--code php
+            'label' => '</>+', 
+            'marker' => 'DIALOG:code-block', // Dialog pro výběr jazyka
+            'title' => 'Blok kódu s jazykem',
+            'group' => 'dialogs',
+            'priority' => 395,
+            'dialog' => 'code-block'
+        ],
         'block/quote' => [            // > citace
             'label' => '💬', 
             'marker' => '>', 
@@ -177,16 +171,23 @@ class TexylaConfigFactory
             'group' => 'blocks',
             'priority' => 390
         ],
+        'blocks' => [                 // /-- \-- obecné bloky
+            'label' => '▦', 
+            'marker' => '/--', 
+            'title' => 'Obecný blok',
+            'group' => 'blocks',
+            'priority' => 385
+        ],
         
         // === NADPISY ===
         'heading/surrounded' => [     // ### nadpis (ohraničené)
-            'label' => 'H#',          // bude dynamicky nahrazeno
-            'marker' => '###',        // bude dynamicky nahrazeno
+            'label' => 'H', 
+            'marker' => 'DIALOG:heading', // Dialog pro výběr úrovně
             'class' => 'texyla-heading',
-            'title' => 'Nadpis',
-            'group' => 'headings',
+            'title' => 'Vložit nadpis',
+            'group' => 'dialogs',
             'priority' => 500,
-            'dynamic' => true         // potřebuje $texy->headingModule->top
+            'dialog' => 'heading'
         ],
         'heading/underlined' => [     // podtržené nadpisy
             'label' => 'H_', 
@@ -201,23 +202,30 @@ class TexylaConfigFactory
         'list' => [                   // - seznam (odrážkový)
             'label' => '•', 
             'marker' => '-', 
-            'title' => 'Seznam',
+            'title' => 'Odrážkový seznam',
             'group' => 'lists',
             'priority' => 600
+        ],
+        'list/numbered' => [          // 1) seznam (číslovaný)
+            'label' => '1.', 
+            'marker' => '1)', 
+            'title' => 'Číslovaný seznam',
+            'group' => 'lists',
+            'priority' => 590
         ],
         'list/definition' => [        // definiční seznam
             'label' => '📖', 
             'marker' => ':', 
             'title' => 'Definiční seznam',
             'group' => 'lists',
-            'priority' => 590
+            'priority' => 580
         ],
         
         // === TABULKY ===
         'table' => [                  // | tabulka |
             'label' => '┃', 
             'marker' => '|', 
-            'title' => 'Tabulka',
+            'title' => 'Tabulka (2×2)',
             'group' => 'tables',
             'priority' => 700
         ],
@@ -247,16 +255,6 @@ class TexylaConfigFactory
             'group' => 'html', 
             'priority' => 890,
             'hidden' => true          // bezpečnost - nezobrazovat
-        ],
-        
-        // === BLOKY / MACRA ===
-        'blocks' => [                 // /-- \-- bloky
-            'label' => '▦', 
-            'marker' => '/--', 
-            'title' => 'Blok',
-            'group' => 'blocks',
-            'priority' => 410,
-            'advanced' => true
         ],
         
         // === AUTOMATICKÉ ÚPRAVY ===
@@ -294,6 +292,7 @@ class TexylaConfigFactory
      * 
      * @param string $context Název kontextu ('admin', 'forum', 'default')
      * @return array [\Texy\Texy, string] Texy objekt a JSON konfigurace tlačítek
+     * @throws \RuntimeException Pokud se nepodaří vytvořit Texy instanci
      */
     public static function getContextSetup(string $context): array
     {
@@ -342,6 +341,7 @@ class TexylaConfigFactory
             'show_hidden' => false,   // nezobrazovat skryté
             'show_advanced' => false, // nezobrazovat pokročilé
             'groups' => null,         // všechny skupiny (null = všechny)
+            'include_dialogs' => true, // zahrnout dialogová tlačítka
         ];
         $options = array_merge($defaultOptions, $options);
         
@@ -382,21 +382,27 @@ class TexylaConfigFactory
                 $button['title'] = "Nadpis {$level}. úrovně";
             }
             
-            // 5. Odstranit interní metadata před vrácením
+            // 5. Dialogová tlačítka - zkontrolovat zda máme TexylaDialog
+            if (!empty($config['dialog']) && !$options['include_dialogs']) {
+                continue;
+            }
+            
+            // 6. Odstranit interní metadata před vrácením
             unset($button['priority'], $button['group'], $button['auto'], 
-                  $button['hidden'], $button['advanced'], $button['dynamic']);
+                  $button['hidden'], $button['advanced'], $button['dynamic'],
+                  $button['dialog']);
             
             $buttons[] = $button;
         }
         
-        // 6. Seřadit podle priority (vyšší = dříve)
+        // 7. Seřadit podle priority (vyšší = dříve)
         usort($buttons, function($a, $b) {
             $priorityA = $a['priority'] ?? 999;
             $priorityB = $b['priority'] ?? 999;
             return $priorityA <=> $priorityB;
         });
         
-        // 7. Odebrat priority z finálního výstupu
+        // 8. Odebrat priority z finálního výstupu
         foreach ($buttons as &$button) {
             unset($button['priority']);
         }
@@ -473,16 +479,18 @@ class TexylaConfigFactory
                 'image' => true,
                 'figure' => true,
                 'block/code' => true,
+                'block/code-language' => true,
                 'block/quote' => true,
+                'blocks' => true,
                 'heading/surrounded' => true,
                 'heading/underlined' => false,
                 'list' => true,
+                'list/numbered' => true,
                 'list/definition' => true,
                 'table' => true,
                 'horizline' => true,
                 'html/tag' => false,
                 'html/comment' => false,
-                'blocks' => true,
                 'typography' => true,
                 'longwords' => true,
                 'emoticon' => false,
@@ -503,16 +511,18 @@ class TexylaConfigFactory
                 'image' => false,
                 'figure' => false,
                 'block/code' => false,
+                'block/code-language' => false,
                 'block/quote' => true,
+                'blocks' => false,
                 'heading/surrounded' => false,
                 'heading/underlined' => false,
                 'list' => true,
+                'list/numbered' => false,
                 'list/definition' => false,
                 'table' => false,
                 'horizline' => false,
                 'html/tag' => false,
                 'html/comment' => false,
-                'blocks' => false,
                 'typography' => true,
                 'longwords' => true,
                 'emoticon' => false,
@@ -533,16 +543,19 @@ class TexylaConfigFactory
                 'image' => false,
                 'figure' => false,
                 'block/code' => false,
+                'block/code-language' => false,
                 'block/quote' => false,
+                'blocks' => false,
                 'heading/surrounded' => false,
                 'heading/underlined' => false,
                 'list' => false,
+                'list/numbered' => false,
                 'list/definition' => false,
                 'table' => false,
                 'horizline' => false,
                 'html/tag' => false,
+                'html/tag' => false,
                 'html/comment' => false,
-                'blocks' => false,
                 'typography' => true,
                 'longwords' => true,
                 'emoticon' => false,
@@ -558,25 +571,25 @@ class TexylaConfigFactory
      * @param array $markers Konfigurace tlačítek
      * @return string JSON konfigurace bezpečně escapovaná pro HTML atribut
      */
-private static function prepareJsonConfig(array $markers): string
-{
-    if (empty($markers)) {
-        return '[]'; // VRÁTIT PRÁZDNÉ POLE, NE PRÁZDNÝ STRING
+    private static function prepareJsonConfig(array $markers): string
+    {
+        if (empty($markers)) {
+            return '[]';
+        }
+        
+        $json = json_encode(
+            $markers,
+            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+        );
+        
+        if ($json === false) {
+            error_log('TexylaConfigFactory: JSON encode failed for markers: ' . print_r($markers, true));
+            return '[]';
+        }
+        
+        // NEescapujeme zde - to udělá texyla_escape_attr v template
+        return $json;
     }
-    
-    $json = json_encode(
-        $markers,
-        JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
-    );
-    
-    if ($json === false) {
-        error_log('TexylaConfigFactory: JSON encode failed');
-        return '[]';
-    }
-    
-    return htmlspecialchars($json, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-}
-
 
     /**
      * Ladící metoda pro zobrazení povolených elementů
@@ -605,5 +618,27 @@ private static function prepareJsonConfig(array $markers): string
             'visible' => count($visibleButtons),
             'hidden' => count($allButtons) - count($visibleButtons)
         ];
+    }
+    
+    /**
+     * Vrátí seznam všech dostupných dialogů pro daný kontext
+     * 
+     * @param string $context Název kontextu
+     * @return array Seznam dostupných dialogů
+     */
+    public static function getAvailableDialogs(string $context): array
+    {
+        $texy = self::createTexyForContext($context);
+        $buttons = self::autoGenerateFromTexy($texy);
+        
+        $dialogs = [];
+        foreach ($buttons as $button) {
+            if (isset($button['marker']) && strpos($button['marker'], 'DIALOG:') === 0) {
+                $dialogType = substr($button['marker'], 7); // odstranit "DIALOG:"
+                $dialogs[$dialogType] = $button['title'] ?? $dialogType;
+            }
+        }
+        
+        return $dialogs;
     }
 }
