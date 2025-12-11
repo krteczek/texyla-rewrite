@@ -5,7 +5,7 @@
  * 
  * @author Dream Team (Petr & Bó)
  * @license MIT
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 /**
@@ -210,7 +210,7 @@ class TexylaVanilla {
                 item.title || '',
                 item.marker || '',
                 'marker',
-                item.class || '' // NOVÉ: CSS třída
+                item.class || '' // CSS třída z configu
             );
             this._toolbar.appendChild(button);
         });
@@ -224,7 +224,7 @@ class TexylaVanilla {
     _addPreviewButton() {
         this._previewButton = this._createToolbarButton(
             '👁️ Náhled',
-            'Přepnout do režimu náhledu',
+            'Přepnout do režimu náhledu (Ctrl+P)',
             '',
             'toggle-preview'
         );
@@ -274,35 +274,58 @@ class TexylaVanilla {
      * @private
      */
     _addEventListeners() {
-        this._toolbar.addEventListener('click', this._handleToolbarClick.bind(this));
+        // Event delegation pro tlačítka (funguje i na text uvnitř tlačítka)
+        this._toolbar.addEventListener('click', (event) => {
+            const button = event.target.closest('.texyla__button');
+            if (!button) return;
+            
+            event.preventDefault();
+            event.stopPropagation();
+            
+            this._handleButtonClick(button);
+        });
+        
+        // Keyboard shortcuts
+        this._setupKeyboardShortcuts();
         
         // Debounced update preview při psaní (volitelné)
         this._setupDebouncedPreview();
     }
     
     /**
-     * Obsluhuje kliknutí na toolbar
+     * Obsluhuje kliknutí na tlačítko v toolbaru
      * 
      * @private
-     * @param {MouseEvent} event Klik event
+     * @param {HTMLButtonElement} button Kliknuté tlačítko
      */
-    _handleToolbarClick(event) {
-        const target = event.target;
+    _handleButtonClick(button) {
+        const marker = button.dataset.marker;
+        const action = button.dataset.action;
         
-        if (!target.classList.contains('texyla__button')) {
-            return;
-        }
-        
-        event.preventDefault();
-        
-        const marker = target.dataset.marker;
-        const action = target.dataset.action;
+        console.debug('Texyla: Button clicked:', { marker, action });
         
         if (marker) {
             this._insertMarker(marker);
         } else if (action === 'toggle-preview') {
             this._togglePreviewMode();
         }
+    }
+    
+    /**
+     * Nastaví keyboard shortcuts pro editor
+     * 
+     * @private
+     */
+    _setupKeyboardShortcuts() {
+        this._textarea.addEventListener('keydown', (event) => {
+            // Ctrl+P pro přepnutí náhledu
+            if (event.ctrlKey && event.key === 'p') {
+                event.preventDefault();
+                this._togglePreviewMode();
+            }
+            
+            // TODO: Přidat další shortcuts (Ctrl+B, Ctrl+I, Ctrl+K)
+        });
     }
     
     /**
@@ -327,40 +350,94 @@ class TexylaVanilla {
         const textarea = this._textarea;
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const text = textarea.value;
-        const selectedText = text.substring(start, end);
+        const selectedText = textarea.value.substring(start, end);
         
-        // Určení typu markeru (párový vs nepárový)
-        const isPairedMarker = ['**', '*', '`', '```'].includes(marker);
-        
-        let newText, newCursorPos;
-        
-        if (selectedText && isPairedMarker) {
-            // Obalení vybraného textu
-            newText = text.substring(0, start) + 
-                     marker + selectedText + marker + 
-                     text.substring(end);
-            newCursorPos = end + marker.length * 2;
-        } else {
-            // Vložení markeru na pozici kurzoru
-            newText = text.substring(0, start) + marker + text.substring(start);
-            newCursorPos = start + marker.length;
+        // Mapování markerů na správnou syntaxi s placeholdery
+        const syntaxMap = {
+            // Párové markery (obalí text nebo vloží pár)
+            '**': selectedText ? `**${selectedText}**` : '****',
+            '*': selectedText ? `*${selectedText}*` : '**',
+            '//': selectedText ? `//${selectedText}//` : '////',
+            '`': selectedText ? `\`${selectedText}\`` : '``',
+            '^^': selectedText ? `^^${selectedText}^^` : '^^^^',
+            '__': selectedText ? `__${selectedText}__` : '____',
+            '++': selectedText ? `++${selectedText}++` : '++++',
+            '--': selectedText ? `--${selectedText}--` : '----',
             
-            // Pro párové markery bez výběru umístit kurzor mezi ně
-            if (isPairedMarker) {
-                newCursorPos = start + marker.length;
+            // Speciální markery s placeholdery
+            '[*]': '[* cesta-k-obrazku .(popisek obrázku) *]',
+            '|': '| záhlaví 1 | záhlaví 2 |\n|-----------|-----------|\n| buňka 1   | buňka 2   |',
+            '```': '```\n// sem vložte kód\n```',
+            '/--': '/--\n// sem vložte obsah bloku\n\\--',
+            '>': '> ',
+            '---': '\n---\n',
+            
+            // Seznamy
+            '-': '- ',
+            '1)': '1) ',
+            'a)': 'a) ',
+            ':': 'termín:\n  - definice',
+        };
+        
+        // Výchozí chování pro nepárové markery
+        let syntax = syntaxMap[marker] || marker;
+        let cursorOffset = 0;
+        
+        // Pokud je vybraný text a marker je v mapě, použijeme vybraný text
+        if (selectedText && syntaxMap[marker] && !['[*]', '|', '```', '/--', '>', '---', '-', '1)', 'a)', ':'].includes(marker)) {
+            // Pro párové markery už máme správnou syntaxi v mapě
+        } else if (!selectedText) {
+            // Pro speciální markery nastavíme kurzor na správné místo
+            switch(marker) {
+                case '``':
+                case '````':
+                    cursorOffset = marker.length / 2;
+                    break;
+                case '[*]':
+                    cursorOffset = 3; // po "[* "
+                    break;
+                case '|':
+                    cursorOffset = 2; // po "| "
+                    break;
+                case '```':
+                    cursorOffset = 4; // po "```\n"
+                    break;
+                case '/--':
+                    cursorOffset = 4; // po "/--\n"
+                    break;
+                case '>':
+                    cursorOffset = 2; // po "> "
+                    break;
+                case '---':
+                    cursorOffset = 1; // po "\n"
+                    break;
+                case '-':
+                case '1)':
+                case 'a)':
+                    cursorOffset = 2; // po markeru a mezeře
+                    break;
+                case ':':
+                    cursorOffset = 7; // po "termín:"
+                    break;
             }
         }
         
-        // Aktualizace textu a pozice kurzoru
+        // Vložení syntaxe do textu
+        const newText = textarea.value.substring(0, start) + 
+                       syntax + 
+                       textarea.value.substring(end);
+        
         textarea.value = newText;
+        
+        // Nastavení pozice kurzoru
+        const newCursorPos = start + syntax.length - cursorOffset;
         textarea.setSelectionRange(newCursorPos, newCursorPos);
         textarea.focus();
         
         // Trigger change event pro případné listenery
         this._triggerChangeEvent();
         
-        console.debug(`Texyla: Vložen marker "${marker}" na pozici ${start}:${end}`);
+        console.debug(`Texyla: Vložen marker "${marker}" → "${syntax.substring(0, 30)}${syntax.length > 30 ? '...' : ''}"`);
     }
     
     /**
@@ -397,7 +474,7 @@ class TexylaVanilla {
         this._previewPanel.style.display = 'none';
         this._textarea.style.display = 'block';
         this._previewButton.textContent = '👁️ Náhled';
-        this._previewButton.title = 'Přepnout do režimu náhledu';
+        this._previewButton.title = 'Přepnout do režimu náhledu (Ctrl+P)';
         this._previewButton.classList.remove('texyla__button--active');
         this._textarea.focus();
     }
@@ -411,7 +488,7 @@ class TexylaVanilla {
         this._textarea.style.display = 'none';
         this._previewPanel.style.display = 'block';
         this._previewButton.textContent = '✏️ Editovat';
-        this._previewButton.title = 'Přepnout zpět do režimu editace';
+        this._previewButton.title = 'Přepnout zpět do režimu editace (Ctrl+P)';
         this._previewButton.classList.add('texyla__button--active');
         this.updatePreview();
     }
@@ -580,19 +657,17 @@ class TexylaVanilla {
         console.info('TexylaVanilla instance destroyed');
     }
     
-    // --- DIALOG METHODS (TODO 1) ---
+    // --- DIALOG METHODS (TODO 1 - PLACEHOLDER) ---
     
     /**
      * Otevře dialog pro vložení odkazu, obrázku nebo nadpisu
      * 
      * @private
-     * @param {string} type Typ dialogu ('link', 'image', 'heading')
+     * @param {string} type Typ dialogu ('link', 'image', 'heading', 'code-block')
      */
     _openDialog(type) {
-        console.log(`Opening dialog: ${type}`);
-        // Implementace bude v TexylaDialog.js
-        // Prozatím placeholder
-        alert(`Dialog ${type} bude implementován v TexylaDialog.js`);
+        console.log(`TODO: Otevírám dialog ${type} (bude implementován v TexylaDialog.js)`);
+        alert(`Dialog "${type}" bude implementován v TexylaDialog.js\n\nProzatím použijte přímo Texy! syntax:\n• Odkaz: [text](url)\n• Obrázek: [* cesta .(popisek) *]\n• Nadpis: ### Text\n• Blok kódu: /--code php\\--`);
     }
     
     /**
