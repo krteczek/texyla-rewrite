@@ -496,3 +496,84 @@
     transform: none !important; /* DŮLEŽITÉ: vypnout pohyb */
     transition: background-color 0.15s ease !important;
 }
+
+
+/* Texyla Dialog Styles */
+.texyla-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.texyla-dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.texyla-dialog h3 {
+  margin: 0 0 20px 0;
+  color: #2d3748;
+  font-size: 1.25rem;
+}
+
+.texyla-dialog-form label {
+  display: block;
+  margin: 12px 0 4px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.texyla-dialog-form input,
+.texyla-dialog-form select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.texyla-dialog-form input:focus,
+.texyla-dialog-form select:focus {
+  outline: none;
+  border-color: #4299e1;
+}
+
+.texyla-dialog-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.texyla-dialog-cancel,
+.texyla-dialog-submit {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 2px solid;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.texyla-dialog-cancel {
+  background: white;
+  border-color: #cbd5e0;
+  color: #4a5568;
+}
+
+.texyla-dialog-submit {
+  background: #4299e1;
+  border-color: #3182ce;
+  color: white;
+}

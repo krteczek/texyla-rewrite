@@ -1,25 +1,22 @@
 /**
  * Project: Texyla Rewrite Dream Team
  * File: /texyla-rewrite/assets/texyla.js
- * Description: Hlavní třída Texyla editoru s automatickou konfigurací
+ * Description: Hlavní třída Texyla editoru - vanilla JavaScript implementace
  * 
  * @author Dream Team (Petr & Bó)
  * @license MIT
- * @version 2.0.0
+ * @version 1.0.0
  */
 
 /**
  * Hlavní třída Texyla editoru
  * 
- * 100% automatická konfigurace z Texy! instance pomocí TexylaConfigFactory
- * Žádný manuální config.php - vše generováno dynamicky
+ * Poskytuje WYSIWYM editor s Texy! syntaxí, toolbar s tlačítky
+ * a AJAX náhledem. Kompatibilní s vanilla JavaScript, žádné závislosti.
  * 
  * @example
- * // Automatická konfigurace z Texy
- * [$texy, $jsonConfig] = TexylaConfigFactory::getContextSetup('admin');
- * <textarea data-texyla-config="<?= $jsonConfig ?>"></textarea>
- * 
- * const editor = new TexylaVanilla(document.getElementById('editor'), '/preview');
+ * // Inicializace editoru
+ * const editor = new TexylaVanilla(document.getElementById('editor1'), '/api/texyla/preview');
  */
 class TexylaVanilla {
     /**
@@ -27,7 +24,7 @@ class TexylaVanilla {
      * 
      * @param {HTMLElement} textareaElement DOM element textarea pro editaci
      * @param {string} previewUrl URL endpointu pro AJAX náhled
-     * @throws {Error} Pokud není předán validní HTML element nebo chybí konfigurace
+     * @throws {Error} Pokud není předán validní HTML element
      */
     constructor(textareaElement, previewUrl) {
         this._validateConstructorArguments(textareaElement, previewUrl);
@@ -41,45 +38,14 @@ class TexylaVanilla {
         this._previewButton = null;
         this._markers = [];
         this._isInitialized = false;
-        this._backendValidated = false;
         
-        // Vývojářské logování
-        console.debug(`🔧 TexylaVanilla: Inicializace pro element #${this._textarea.id || 'unnamed'}`);
+        // Inicializace editoru
+        this._initializeEditor();
         
-        // 1. Validace backendu před inicializací
-        this._validateBackend()
-            .then(isValid => {
-                if (!isValid) {
-                    console.error('❌ Texyla: Backend validace selhala');
-                    return;
-                }
-                
-                // 2. Validace konfigurace
-                if (!this._validateTexylaConfig()) {
-                    throw new Error('Texyla: Není nastavena konfigurace. Použij TexylaConfigFactory.');
-                }
-                
-                // 3. Inicializace editoru
-                this._initializeEditor();
-                this._isInitialized = true;
-                console.info(`✅ Texyla: Editor #${this._textarea.id || 'unnamed'} úspěšně inicializován`);
-            })
-            .catch(error => {
-                console.error('💥 Texyla: Kritická chyba inicializace:', error);
-                this._showFatalError({
-                    title: '💥 Texyla: Selhala inicializace',
-                    message: 'Editor se nepodařilo inicializovat.',
-                    details: error.message,
-                    fixSteps: [
-                        '1. Zkontrolujte, zda má textarea atribut <code>data-texyla-config</code>',
-                        '2. Ověřte, že endpoint <code>' + this._previewUrl + '</code> existuje',
-                        '3. Použijte <code>TexylaConfigFactory</code> pro automatickou konfiguraci'
-                    ]
-                });
-            });
+        console.info(`TexylaVanilla initialized for element #${this._textarea.id || 'unnamed'}`);
     }
     
-    // === VALIDACE A INICIALIZACE ===
+    // --- VALIDACE A INICIALIZACE ---
     
     /**
      * Validuje vstupní argumenty konstruktoru
@@ -94,193 +60,13 @@ class TexylaVanilla {
             throw new Error('TexylaVanilla: První argument musí být HTML element');
         }
         
+        if (textareaElement.tagName !== 'TEXTAREA') {
+            console.warn('TexylaVanilla: Element není textarea, ale bude použit jako textový editor');
+        }
+        
         if (typeof previewUrl !== 'string' || previewUrl.trim() === '') {
             throw new Error('TexylaVanilla: Druhý argument musí být URL string');
         }
-        
-        // Uložit originální URL pro debug
-        this._originalPreviewUrl = previewUrl;
-    }
-    
-    /**
-     * Validuje, že backend endpoint existuje a odpovídá
-     * 
-     * @private
-     * @async
-     * @returns {Promise<boolean>} True pokud backend funguje
-     */
-    async _validateBackend() {
-        console.debug(`🌐 Texyla: Validace backendu na ${this._previewUrl}`);
-        
-        try {
-            const test = await fetch(this._previewUrl, {
-                method: 'HEAD',
-                mode: 'same-origin',
-                cache: 'no-cache',
-                headers: { 'X-Texyla-Validation': 'true' }
-            });
-            
-            if (!test.ok) {
-                throw new Error(`Backend odpověděl s chybou: ${test.status} ${test.statusText}`);
-            }
-            
-            console.debug(`✅ Texyla: Backend validován úspěšně (${test.status})`);
-            this._backendValidated = true;
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Texyla: Backend validace selhala:', error);
-            
-            this._showFatalError({
-                title: '🌐 Texyla: Backend nenalezen',
-                message: `Endpoint <code>${this._previewUrl}</code> neodpovídá.`,
-                details: error.message,
-                fixSteps: [
-                    '1. Zkontrolujte, zda <strong>src/TexylaController.php</strong> existuje',
-                    '2. Ověřte práva ke čtení PHP souborů',
-                    '3. Zkontrolujte cestu v inicializaci Texyly',
-                    '4. Zkuste URL: <code>' + this._previewUrl + '</code> v prohlížeči'
-                ],
-                technicalInfo: {
-                    url: this._previewUrl,
-                    method: 'HEAD',
-                    error: error.toString()
-                }
-            });
-            
-            this._backendValidated = false;
-            return false;
-        }
-    }
-    
-    /**
-     * Validuje konfiguraci Texyly
-     * 
-     * @private
-     * @returns {boolean} True pokud je konfigurace platná
-     */
-    _validateTexylaConfig() {
-        const configJson = this._textarea.dataset.texylaConfig;
-        
-        if (!configJson) {
-            this._showFatalError({
-                title: '⚙️ Texyla: Chybí konfigurace',
-                message: 'Editor není nakonfigurován. <strong>Použij TexylaConfigFactory</strong>.',
-                details: 'Atribut data-texyla-config je prázdný nebo chybí.',
-                fixSteps: [
-                    '1. V PHP: <code>[$texy, $config] = TexylaConfigFactory::getContextSetup("admin")</code>',
-                    '2. V HTML: <code>data-texyla-config="<?= htmlspecialchars($config) ?>"</code>',
-                    '3. Žádný manuální config.php - vše je automatické!'
-                ],
-                migrationNote: 'Tento projekt používá 100% automatickou konfiguraci z Texy instance.'
-            });
-            return false;
-        }
-        
-        try {
-            const parsed = JSON.parse(configJson);
-            
-            if (!Array.isArray(parsed)) {
-                throw new Error('Konfigurace není pole');
-            }
-            
-            if (parsed.length === 0) {
-                console.warn('⚠️ Texyla: Konfigurace obsahuje prázdné pole (žádná tlačítka)');
-            }
-            
-            console.debug(`✅ Texyla: Konfigurace validována (${parsed.length} tlačítek)`);
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Texyla: Neplatná konfigurace JSON:', error);
-            
-            this._showFatalError({
-                title: '📄 Texyla: Neplatná konfigurace',
-                message: 'Konfigurace v <code>data-texyla-config</code> není platný JSON.',
-                details: error.message,
-                fixSteps: [
-                    '1. Zkontrolujte výstup z <code>TexylaConfigFactory</code>',
-                    '2. Ověřte, že používáte <code>htmlspecialchars()</code>',
-                    '3. Zkuste konfiguraci zvalidovat na: <a href="https://jsonlint.com/" target="_blank">JSONLint.com</a>'
-                ],
-                jsonSnippet: configJson.substring(0, 200) + '...'
-            });
-            
-            return false;
-        }
-    }
-    
-    /**
-     * Zobrazí fatální chybu editoru
-     * 
-     * @private
-     * @param {Object} errorInfo Informace o chybě
-     */
-    _showFatalError(errorInfo) {
-        // Pokud už byla zobrazena chyba, nepřidávej další
-        if (this._textarea.previousElementSibling?.classList?.contains('texyla-fatal-error')) {
-            return;
-        }
-        
-        const overlay = document.createElement('div');
-        overlay.className = 'texyla-fatal-error';
-        
-        let html = `
-            <div class="texyla-error-box">
-                <h3>${errorInfo.title || '⚠️ Texyla Chyba'}</h3>
-                <div class="texyla-error-message">
-                    ${errorInfo.message || 'Došlo k neočekávané chybě.'}
-                </div>`;
-        
-        if (errorInfo.details) {
-            html += `<div class="texyla-error-details">${errorInfo.details}</div>`;
-        }
-        
-        if (errorInfo.fixSteps && Array.isArray(errorInfo.fixSteps)) {
-            html += `
-                <div class="texyla-error-fix">
-                    <h4>🛠️ Možná řešení:</h4>
-                    <ul>${errorInfo.fixSteps.map(step => `<li>${step}</li>`).join('')}</ul>
-                </div>`;
-        }
-        
-        if (errorInfo.migrationNote) {
-            html += `
-                <div class="texyla-error-fix" style="background: #e6fffa; border-color: #81e6d9;">
-                    <h4>🔄 Migrace na automatickou konfiguraci:</h4>
-                    <p>${errorInfo.migrationNote}</p>
-                </div>`;
-        }
-        
-        html += `
-                <div class="texyla-error-url">
-                    <strong>🔗 Endpoint:</strong> <code>${this._previewUrl}</code><br>
-                    <strong>🎯 Element:</strong> <code>#${this._textarea.id || 'bez-id'}</code>
-                </div>`;
-        
-        if (errorInfo.technicalInfo) {
-            html += `
-                <details style="margin-top: 1rem;">
-                    <summary style="cursor: pointer; color: #4a5568; font-weight: 500;">
-                        🔍 Technické informace
-                    </summary>
-                    <pre style="background: #f7fafc; padding: 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; margin-top: 0.5rem;">
-${JSON.stringify(errorInfo.technicalInfo, null, 2)}</pre>
-                </details>`;
-        }
-        
-        html += `</div>`;
-        overlay.innerHTML = html;
-        
-        // Vložit chybu před textarea
-        this._textarea.parentNode.insertBefore(overlay, this._textarea);
-        
-        // Znefunkčnit textareu
-        this._textarea.style.opacity = '0.5';
-        this._textarea.style.pointerEvents = 'none';
-        this._textarea.disabled = true;
-        
-        console.error('💥 Texyla: Zobrazena fatální chyba:', errorInfo);
     }
     
     /**
@@ -295,15 +81,574 @@ ${JSON.stringify(errorInfo.technicalInfo, null, 2)}</pre>
             this._loadButtonConfig();
             this._createToolbar();
             this._addEventListeners();
-            
+            this._isInitialized = true;
         } catch (error) {
             console.error('TexylaVanilla initialization failed:', error);
-            this._showFatalError({
-                title: '💥 Texyla: Selhala inicializace komponent',
-                message: 'Nepodařilo se vytvořit komponenty editoru.',
-                details: error.message
-            });
+            this._showErrorState('Editor se nepodařilo inicializovat');
         }
     }
     
-    // === DOM MANIPULACE ===
+    /**
+     * Zobrazí chybový stav editoru
+     * 
+     * @private
+     * @param {string} message Chybová zpráva
+     */
+    _showErrorState(message) {
+        this._textarea.style.borderColor = '#dc2626';
+        this._textarea.title = `Chyba: ${message}`;
+        console.error('Texyla error state:', message);
+    }
+    
+    // --- DOM MANIPULACE ---
+    
+    /**
+     * Obalí textareu wrapperem a připraví strukturu pro editor
+     * 
+     * @private
+     */
+    _wrapTextarea() {
+        // Vytvoření hlavního wrapperu
+        this._wrapper = document.createElement('div');
+        this._wrapper.className = 'texyla';
+        
+        // Uložení původní pozice a vložení wrapperu
+        const parent = this._textarea.parentNode;
+        parent.insertBefore(this._wrapper, this._textarea);
+        
+        // Vytvoření containeru pro obsah (textarea + preview)
+        this._contentContainer = document.createElement('div');
+        this._contentContainer.className = 'texyla__content';
+        
+        // Přesun textarey do containeru
+        this._contentContainer.appendChild(this._textarea);
+        this._wrapper.appendChild(this._contentContainer);
+    }
+    
+    /**
+     * Najde nebo vytvoří panel pro náhled
+     * 
+     * @private
+     */
+    _findOrCreatePreviewPanel() {
+        const textareaId = this._textarea.id;
+        
+        // Hledání existujícího panelu
+        if (textareaId) {
+            this._previewPanel = this._wrapper.querySelector(`.texyla__preview[data-for="${textareaId}"]`);
+        }
+        
+        // Pokud panel neexistuje, vytvoříme nový
+        if (!this._previewPanel) {
+            this._previewPanel = document.createElement('div');
+            this._previewPanel.className = 'texyla__preview';
+            this._previewPanel.dataset.for = textareaId || '';
+            
+            // Přidání panelu jako sourozence textarey
+            this._contentContainer.appendChild(this._previewPanel);
+        }
+        
+        // Výchozí stav - skrytý
+        this._previewPanel.style.display = 'none';
+    }
+    
+    /**
+     * Načte konfiguraci tlačítek z data atributu
+     * 
+     * @private
+     */
+    _loadButtonConfig() {
+        const configJson = this._textarea.dataset.texylaConfig;
+        
+        if (!configJson) {
+            console.warn('TexylaVanilla: Konfigurace tlačítek nebyla nalezena v data-texyla-config');
+            this._markers = [];
+            return;
+        }
+        
+        try {
+            this._markers = JSON.parse(configJson);
+            
+            if (!Array.isArray(this._markers)) {
+                console.warn('TexylaVanilla: Konfigurace tlačítek není pole, použije se prázdné');
+                this._markers = [];
+            }
+        } catch (error) {
+            console.error('TexylaVanilla: Chyba při parsování konfigurace:', error);
+            this._markers = [];
+        }
+    }
+    
+    /**
+     * Vytvoří toolbar s tlačítky
+     * 
+     * @private
+     */
+    _createToolbar() {
+        this._toolbar = document.createElement('div');
+        this._toolbar.className = 'texyla__toolbar';
+        
+        // Přidání tlačítek pro markery
+        this._addMarkerButtons();
+        
+        // Přidání tlačítka pro náhled
+        this._addPreviewButton();
+        
+        // Vložení toolbaru před obsah
+        this._wrapper.insertBefore(this._toolbar, this._contentContainer);
+    }
+    
+    /**
+     * Přidá tlačítka pro markery do toolbaru
+     * 
+     * @private
+     */
+    _addMarkerButtons() {
+        this._markers.forEach((item, index) => {
+            const button = this._createToolbarButton(
+                item.label || `Btn${index}`,
+                item.title || '',
+                item.marker || '',
+                'marker',
+                item.class || '' // NOVÉ: CSS třída
+            );
+            this._toolbar.appendChild(button);
+        });
+    }
+    
+    /**
+     * Přidá tlačítko pro přepínání náhledu
+     * 
+     * @private
+     */
+    _addPreviewButton() {
+        this._previewButton = this._createToolbarButton(
+            '👁️ Náhled',
+            'Přepnout do režimu náhledu',
+            '',
+            'toggle-preview'
+        );
+        this._previewButton.className += ' texyla__button--preview';
+        this._toolbar.appendChild(this._previewButton);
+    }
+    
+    /**
+     * Vytvoří tlačítko pro toolbar
+     * 
+     * @private
+     * @param {string} text Text tlačítka
+     * @param {string} title Tooltip tlačítka
+     * @param {string} marker Marker pro vložení (nebo akce)
+     * @param {string} type Typ tlačítka ('marker' nebo 'toggle-preview')
+     * @param {string} cssClass CSS třída pro tlačítko
+     * @returns {HTMLButtonElement} Vytvořené tlačítko
+     */
+    _createToolbarButton(text, title, marker, type, cssClass) {
+        cssClass = cssClass || '';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'texyla__button';
+        
+        // Přidat CSS třídu z configu
+        if (cssClass && cssClass.trim() !== '') {
+            button.classList.add(cssClass.trim());
+        }
+        
+        button.textContent = text;
+        button.title = title;
+        
+        if (type === 'marker' && marker) {
+            button.dataset.marker = marker;
+        } else if (type === 'toggle-preview') {
+            button.dataset.action = 'toggle-preview';
+        }
+        
+        return button;
+    }
+    
+    // --- EVENT HANDLING ---
+    
+    /**
+     * Přidá event listenery pro interakci s editorem
+     * 
+     * @private
+     */
+    _addEventListeners() {
+        this._toolbar.addEventListener('click', this._handleToolbarClick.bind(this));
+        
+        // Debounced update preview při psaní (volitelné)
+        this._setupDebouncedPreview();
+    }
+    
+    /**
+     * Obsluhuje kliknutí na toolbar
+     * 
+     * @private
+     * @param {MouseEvent} event Klik event
+     */
+    _handleToolbarClick(event) {
+        const target = event.target;
+        
+        if (!target.classList.contains('texyla__button')) {
+            return;
+        }
+        
+        event.preventDefault();
+        
+        const marker = target.dataset.marker;
+        const action = target.dataset.action;
+        
+        if (marker) {
+            this._insertMarker(marker);
+        } else if (action === 'toggle-preview') {
+            this._togglePreviewMode();
+        }
+    }
+    
+    /**
+     * Nastaví debounced update preview při psaní (volitelné funkce)
+     * 
+     * @private
+     */
+    _setupDebouncedPreview() {
+        // Toto je volitelná funkcionalita pro budoucí rozšíření
+        // Můžeme přidat auto-update preview při psaní s debouncing
+    }
+    
+    // --- FUNKČNOST EDITORU ---
+    
+    /**
+     * Vloží marker na pozici kurzoru nebo obalí vybraný text
+     * 
+     * @private
+     * @param {string} marker Texy! marker (např. '**', '*', '```')
+     */
+    _insertMarker(marker) {
+        const textarea = this._textarea;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const selectedText = text.substring(start, end);
+        
+        // Určení typu markeru (párový vs nepárový)
+        const isPairedMarker = ['**', '*', '`', '```'].includes(marker);
+        
+        let newText, newCursorPos;
+        
+        if (selectedText && isPairedMarker) {
+            // Obalení vybraného textu
+            newText = text.substring(0, start) + 
+                     marker + selectedText + marker + 
+                     text.substring(end);
+            newCursorPos = end + marker.length * 2;
+        } else {
+            // Vložení markeru na pozici kurzoru
+            newText = text.substring(0, start) + marker + text.substring(start);
+            newCursorPos = start + marker.length;
+            
+            // Pro párové markery bez výběru umístit kurzor mezi ně
+            if (isPairedMarker) {
+                newCursorPos = start + marker.length;
+            }
+        }
+        
+        // Aktualizace textu a pozice kurzoru
+        textarea.value = newText;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.focus();
+        
+        // Trigger change event pro případné listenery
+        this._triggerChangeEvent();
+        
+        console.debug(`Texyla: Vložen marker "${marker}" na pozici ${start}:${end}`);
+    }
+    
+    /**
+     * Spustí change event na textarea
+     * 
+     * @private
+     */
+    _triggerChangeEvent() {
+        const event = new Event('input', { bubbles: true });
+        this._textarea.dispatchEvent(event);
+    }
+    
+    /**
+     * Přepíná mezi režimem editace a náhledu
+     * 
+     * @private
+     */
+    _togglePreviewMode() {
+        const isPreviewActive = this._previewPanel.style.display !== 'none';
+        
+        if (isPreviewActive) {
+            this._switchToEditMode();
+        } else {
+            this._switchToPreviewMode();
+        }
+    }
+    
+    /**
+     * Přepne do režimu editace
+     * 
+     * @private
+     */
+    _switchToEditMode() {
+        this._previewPanel.style.display = 'none';
+        this._textarea.style.display = 'block';
+        this._previewButton.textContent = '👁️ Náhled';
+        this._previewButton.title = 'Přepnout do režimu náhledu';
+        this._previewButton.classList.remove('texyla__button--active');
+        this._textarea.focus();
+    }
+    
+    /**
+     * Přepne do režimu náhledu
+     * 
+     * @private
+     */
+    _switchToPreviewMode() {
+        this._textarea.style.display = 'none';
+        this._previewPanel.style.display = 'block';
+        this._previewButton.textContent = '✏️ Editovat';
+        this._previewButton.title = 'Přepnout zpět do režimu editace';
+        this._previewButton.classList.add('texyla__button--active');
+        this.updatePreview();
+    }
+    
+    /**
+     * Načte náhled přes AJAX a zobrazí ho
+     * 
+     * @async
+     * @returns {Promise<void>}
+     */
+    async updatePreview() {
+        // Kontrola, zda je panel viditelný
+        if (!this._previewPanel || this._textarea.style.display !== 'none') {
+            return;
+        }
+        
+        const context = this._textarea.dataset.context || 'default';
+        const sourceText = this._textarea.value;
+        
+        // Pokud je text prázdný, zobrazíme prázdný náhled
+        if (!sourceText.trim()) {
+            this._previewPanel.innerHTML = '<p class="texyla-empty-preview">Žádný text k náhledu</p>';
+            return;
+        }
+        
+        // Nastavení loading stavu
+        this._setPreviewLoading(true);
+        
+        try {
+            const html = await this._fetchPreview(sourceText, context);
+            this._previewPanel.innerHTML = html;
+        } catch (error) {
+            this._showPreviewError(error);
+        } finally {
+            this._setPreviewLoading(false);
+        }
+    }
+    
+    /**
+     * Nastaví loading stav pro náhled
+     * 
+     * @private
+     * @param {boolean} isLoading Zda je načítání aktivní
+     */
+    _setPreviewLoading(isLoading) {
+        if (isLoading) {
+            this._previewPanel.classList.add('texyla__preview--loading');
+        } else {
+            this._previewPanel.classList.remove('texyla__preview--loading');
+        }
+    }
+    
+    /**
+     * Získá náhled z serveru přes AJAX
+     * 
+     * @private
+     * @async
+     * @param {string} sourceText Texy! syntaxe
+     * @param {string} context Kontext zpracování
+     * @returns {Promise<string>} HTML náhled
+     * @throws {Error} Pokud AJAX request selže
+     */
+    async _fetchPreview(sourceText, context) {
+        const response = await fetch(this._previewUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'text/html',
+            },
+            body: JSON.stringify({
+                texy_source: sourceText,
+                context: context
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server odpověděl s chybou: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.text();
+    }
+    
+    /**
+     * Zobrazí chybu v náhledu
+     * 
+     * @private
+     * @param {Error} error Zachycená chyba
+     */
+    _showPreviewError(error) {
+        console.error('Texyla preview error:', error);
+        
+        this._previewPanel.innerHTML = `
+            <div class="texyla__error">
+                <p>❌ Nelze načíst náhled</p>
+                <small>${this._escapeHtml(error.message)}</small>
+            </div>
+        `;
+    }
+    
+    /**
+     * Escape HTML speciálních znaků
+     * 
+     * @private
+     * @param {string} text Text k escapování
+     * @returns {string} Escapovaný text
+     */
+    _escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // --- PUBLIC API ---
+    
+    /**
+     * Vrátí aktuální obsah editoru
+     * 
+     * @returns {string} Text z textarey
+     */
+    getValue() {
+        return this._textarea.value;
+    }
+    
+    /**
+     * Nastaví obsah editoru
+     * 
+     * @param {string} value Nový text
+     */
+    setValue(value) {
+        this._textarea.value = value || '';
+        this._triggerChangeEvent();
+    }
+    
+    /**
+     * Zjistí, zda je editor v režimu náhledu
+     * 
+     * @returns {boolean} True pokud je aktivní náhled
+     */
+    isPreviewActive() {
+        return this._previewPanel.style.display !== 'none';
+    }
+    
+    /**
+     * Zničí instanci editoru a uklidí DOM
+     */
+    destroy() {
+        if (!this._isInitialized) {
+            return;
+        }
+        
+        // Odstranění event listenerů
+        this._toolbar.removeEventListener('click', this._handleToolbarClick);
+        
+        // Návrat k původnímu stavu DOM
+        const parent = this._wrapper.parentNode;
+        parent.insertBefore(this._textarea, this._wrapper);
+        parent.removeChild(this._wrapper);
+        
+        // Vynulování referencí
+        this._wrapper = null;
+        this._toolbar = null;
+        this._previewPanel = null;
+        this._previewButton = null;
+        this._isInitialized = false;
+        
+        console.info('TexylaVanilla instance destroyed');
+    }
+    
+    // --- DIALOG METHODS (TODO 1) ---
+    
+    /**
+     * Otevře dialog pro vložení odkazu, obrázku nebo nadpisu
+     * 
+     * @private
+     * @param {string} type Typ dialogu ('link', 'image', 'heading')
+     */
+    _openDialog(type) {
+        console.log(`Opening dialog: ${type}`);
+        // Implementace bude v TexylaDialog.js
+        // Prozatím placeholder
+        alert(`Dialog ${type} bude implementován v TexylaDialog.js`);
+    }
+    
+    /**
+     * Vloží obsah z dialogu do editoru
+     * 
+     * @private
+     * @param {string} type Typ dialogu
+     * @param {Object} data Data z dialogu
+     */
+    _insertFromDialog(type, data) {
+        console.log(`Insert from dialog ${type}:`, data);
+        // Implementace bude v TexylaDialog.js
+    }
+    
+    /**
+     * Získá vybraný text v editoru
+     * 
+     * @private
+     * @returns {string} Vybraný text
+     */
+    _getSelectedText() {
+        return this._textarea.value.substring(
+            this._textarea.selectionStart,
+            this._textarea.selectionEnd
+        );
+    }
+    
+    /**
+     * Obalí vybraný text syntaxí
+     * 
+     * @private
+     * @param {string} syntax Texy! syntaxe
+     */
+    _wrapSelection(syntax) {
+        const start = this._textarea.selectionStart;
+        const end = this._textarea.selectionEnd;
+        const text = this._textarea.value;
+        
+        this._textarea.value = 
+            text.substring(0, start) + 
+            syntax + 
+            text.substring(end);
+        
+        this._textarea.focus();
+        this._textarea.setSelectionRange(
+            start + syntax.length,
+            start + syntax.length
+        );
+        
+        this._triggerChangeEvent();
+    }
+}
+
+// Export pro globální použití
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = TexylaVanilla;
+} else {
+    window.TexylaVanilla = TexylaVanilla;
+}

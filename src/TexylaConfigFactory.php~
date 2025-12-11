@@ -123,7 +123,26 @@ class TexylaConfigFactory
             'priority' => 188,
             'hidden' => true          // nezobrazovat v toolbaru
         ],
-        
+			 // Změnit config, aby obsahovala dialog tlačítka
+			// Přidat do TexylaConfigFactory nové položky:
+			'dialog/link' => [
+			    'label' => '🔗',
+			    'dialog' => 'link',  // místo markeru
+			    'title' => 'Vložit odkaz',
+			    'group' => 'dialogs'
+			],
+			'dialog/image' => [
+			    'label' => '🖼️',
+			    'dialog' => 'image',
+			    'title' => 'Vložit obrázek', 
+			    'group' => 'dialogs'
+			],
+			'dialog/heading' => [
+			    'label' => 'H',
+			    'dialog' => 'heading',
+			    'title' => 'Vložit nadpis',
+			    'group' => 'dialogs'
+			],       
         // === OBRAZKY ===
         'image' => [                  // [* obrázek *]
             'label' => '🖼️', 
@@ -539,16 +558,24 @@ class TexylaConfigFactory
      * @param array $markers Konfigurace tlačítek
      * @return string JSON konfigurace bezpečně escapovaná pro HTML atribut
      */
-    private static function prepareJsonConfig(array $markers): string
-    {
-        $json = json_encode(
-            $markers,
-            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
-        );
-        
-        return htmlspecialchars($json, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+private static function prepareJsonConfig(array $markers): string
+{
+    if (empty($markers)) {
+        return '[]'; // VRÁTIT PRÁZDNÉ POLE, NE PRÁZDNÝ STRING
     }
-
+    
+    $json = json_encode(
+        $markers,
+        JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+    );
+    
+    if ($json === false) {
+        error_log('TexylaConfigFactory: JSON encode failed');
+        return '[]';
+    }
+    
+    return htmlspecialchars($json, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
     /**
      * Ladící metoda pro zobrazení povolených elementů
      * 

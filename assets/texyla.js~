@@ -1,3 +1,26 @@
+{
+    return this._textarea.value.substring(
+      this._textarea.selectionStart,
+      this._textarea.selectionEnd
+    );
+  }
+{
+    // existující funkce pro vložení textu
+    const start = this._textarea.selectionStart;
+    const end = this._textarea.selectionEnd;
+    const text = this._textarea.value;
+    
+    this._textarea.value = 
+      text.substring(0, start) + 
+      syntax + 
+      text.substring(end);
+    
+    this._textarea.focus();
+    this._textarea.setSelectionRange(
+      start + syntax.length,
+      start + syntax.length
+    );
+  }
 /**
  * Project: Texyla Rewrite Dream Team
  * File: /texyla-rewrite/assets/texyla.js
@@ -203,18 +226,19 @@ class TexylaVanilla {
      * 
      * @private
      */
-_addMarkerButtons() {
-    this._markers.forEach((item, index) => {
-        const button = this._createToolbarButton(
-            item.label || `Btn${index}`,
-            item.title || '',
-            item.marker || '',
-            'marker',
-            item.class || '' // NOVÉ: CSS třída
-        );
-        this._toolbar.appendChild(button);
-    });
-}    
+    _addMarkerButtons() {
+        this._markers.forEach((item, index) => {
+            const button = this._createToolbarButton(
+                item.label || `Btn${index}`,
+                item.title || '',
+                item.marker || '',
+                'marker',
+                item.class || '' // NOVÉ: CSS třída
+            );
+            this._toolbar.appendChild(button);
+        });
+    }
+    
     /**
      * Přidá tlačítko pro přepínání náhledu
      * 
@@ -239,29 +263,31 @@ _addMarkerButtons() {
      * @param {string} title Tooltip tlačítka
      * @param {string} marker Marker pro vložení (nebo akce)
      * @param {string} type Typ tlačítka ('marker' nebo 'toggle-preview')
+     * @param {string} cssClass CSS třída pro tlačítko
      * @returns {HTMLButtonElement} Vytvořené tlačítko
      */
-_createToolbarButton(text, title, marker, type, cssClass = '') {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'texyla__button';
-    
-    // NOVÉ: Přidat CSS třídu z configu
-    if (cssClass && cssClass.trim() !== '') {
-        button.classList.add(cssClass.trim());
+    _createToolbarButton(text, title, marker, type, cssClass) {
+        cssClass = cssClass || '';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'texyla__button';
+        
+        // Přidat CSS třídu z configu
+        if (cssClass && cssClass.trim() !== '') {
+            button.classList.add(cssClass.trim());
+        }
+        
+        button.textContent = text;
+        button.title = title;
+        
+        if (type === 'marker' && marker) {
+            button.dataset.marker = marker;
+        } else if (type === 'toggle-preview') {
+            button.dataset.action = 'toggle-preview';
+        }
+        
+        return button;
     }
-    
-    button.textContent = text;
-    button.title = title;
-    
-    if (type === 'marker' && marker) {
-        button.dataset.marker = marker;
-    } else if (type === 'toggle-preview') {
-        button.dataset.action = 'toggle-preview';
-    }
-    
-    return button;
-}
     
     // --- EVENT HANDLING ---
     
@@ -576,4 +602,76 @@ _createToolbarButton(text, title, marker, type, cssClass = '') {
         
         console.info('TexylaVanilla instance destroyed');
     }
+    
+    // --- DIALOG METHODS (TODO 1) ---
+    
+    /**
+     * Otevře dialog pro vložení odkazu, obrázku nebo nadpisu
+     * 
+     * @private
+     * @param {string} type Typ dialogu ('link', 'image', 'heading')
+     */
+    _openDialog(type) {
+        console.log(`Opening dialog: ${type}`);
+        // Implementace bude v TexylaDialog.js
+        // Prozatím placeholder
+        alert(`Dialog ${type} bude implementován v TexylaDialog.js`);
+    }
+    
+    /**
+     * Vloží obsah z dialogu do editoru
+     * 
+     * @private
+     * @param {string} type Typ dialogu
+     * @param {Object} data Data z dialogu
+     */
+    _insertFromDialog(type, data) {
+        console.log(`Insert from dialog ${type}:`, data);
+        // Implementace bude v TexylaDialog.js
+    }
+    
+    /**
+     * Získá vybraný text v editoru
+     * 
+     * @private
+     * @returns {string} Vybraný text
+     */
+    _getSelectedText() {
+        return this._textarea.value.substring(
+            this._textarea.selectionStart,
+            this._textarea.selectionEnd
+        );
+    }
+    
+    /**
+     * Obalí vybraný text syntaxí
+     * 
+     * @private
+     * @param {string} syntax Texy! syntaxe
+     */
+    _wrapSelection(syntax) {
+        const start = this._textarea.selectionStart;
+        const end = this._textarea.selectionEnd;
+        const text = this._textarea.value;
+        
+        this._textarea.value = 
+            text.substring(0, start) + 
+            syntax + 
+            text.substring(end);
+        
+        this._textarea.focus();
+        this._textarea.setSelectionRange(
+            start + syntax.length,
+            start + syntax.length
+        );
+        
+        this._triggerChangeEvent();
+    }
+}
+
+// Export pro globální použití
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = TexylaVanilla;
+} else {
+    window.TexylaVanilla = TexylaVanilla;
 }
