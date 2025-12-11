@@ -1,8 +1,8 @@
 <?php
 /**
- * Texyla Demo - STABILNÍ VERZE
+ * Texyla Demo - KOMPLETNÍ VERZE S DIALOGY
  * 100% automatická konfigurace z Texy! pomocí TexylaConfigFactory
- * Žádný config.php - vše generováno dynamicky
+ * S podporou dialogů pro odkazy, obrázky, nadpisy a bloky kódu
  * 
  * URL: /texyla-rewrite/demo/index.php
  */
@@ -17,6 +17,10 @@ ini_set('display_startup_errors', 1);
 
 session_start();
 
+// Definice konstant pro prostředí
+define('TEXYLA_DEMO_VERSION', '1.1.0');
+define('TEXYLA_DEMO_ENV', $_SERVER['SERVER_NAME'] === 'localhost' ? 'development' : 'production');
+
 // Funkce pro bezpečné escapování textarey
 function texyla_escape_textarea(string $text): string {
     return htmlspecialchars(
@@ -27,8 +31,12 @@ function texyla_escape_textarea(string $text): string {
     );
 }
 
-// Funkce pro bezpečné escapování atributů
+// Funkce pro bezpečné escapování atributů (s kontrolou double escaping)
 function texyla_escape_attr(string $text): string {
+    // Pokud text už obsahuje HTML entity, neescapuj znovu
+    if (preg_match('/&(?:[a-z]+|#\d+);/i', $text)) {
+        return $text;
+    }
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
@@ -43,6 +51,7 @@ $configForum = '[]';
 $demoAdminContent = '';
 $demoForumContent = '';
 $systemStatus = [];
+$availableDialogs = [];
 
 // Načíst autoloader
 $autoloadPath = __DIR__ . '/../vendor/autoload.php';
@@ -66,51 +75,40 @@ if (file_exists($autoloadPath)) {
                     // AUTOMATICKÁ KONFIGURACE - žádný config.php!
                     list($texyAdmin, $configAdmin) = \Texyla\TexylaConfigFactory::getContextSetup('admin');
                     list($texyForum, $configForum) = \Texyla\TexylaConfigFactory::getContextSetup('forum');
-                    //print_r($texyAdmin);
-                    //print_r($texyForum);
-                    // Debug info
-                    //$systemStatus['admin_buttons'] = count(json_decode($configAdmin, true));
-                    //$systemStatus['forum_buttons'] = count(json_decode($configForum, true));
+                    
                     // Debug info - ROBUSTNÍ VERZE
-// Zajisti, že konfigurace není prázdná
-if (empty($configAdmin) || $configAdmin === '[]') {
-    $configAdmin = '[]'; // Explicitně prázdné pole
-}
-
-if (empty($configForum) || $configForum === '[]') {
-    $configForum = '[]'; // Explicitně prázdné pole
-}
-
-try {
-    $adminArray = json_decode($configAdmin, true);
-    $forumArray = json_decode($configForum, true);
-    
-    $systemStatus['admin_buttons'] = is_array($adminArray) ? count($adminArray) : 0;
-    $systemStatus['forum_buttons'] = is_array($forumArray) ? count($forumArray) : 0;
-    
-    // Logování pokud je JSON neplatný
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log(sprintf(
-            'Texyla Demo: JSON decode error - Admin: %s, Forum: %s, Error: %s',
-            json_last_error_msg(),
-            substr($configAdmin, 0, 100),
-            substr($configForum, 0, 100)
-        ));
-    }
-} catch (Exception $e) {
-    // Fallback na 0 tlačítek
-    $systemStatus['admin_buttons'] = 0;
-    $systemStatus['forum_buttons'] = 0;
-    error_log('Texyla Demo: Error counting buttons: ' . $e->getMessage());
-}  
+                    if (empty($configAdmin) || $configAdmin === '[]') {
+                        $configAdmin = '[]';
+                    }
+                    
+                    if (empty($configForum) || $configForum === '[]') {
+                        $configForum = '[]';
+                    }
+                    
+                    try {
+                        $adminArray = json_decode($configAdmin, true);
+                        $forumArray = json_decode($configForum, true);
+                        
+                        $systemStatus['admin_buttons'] = is_array($adminArray) ? count($adminArray) : 0;
+                        $systemStatus['forum_buttons'] = is_array($forumArray) ? count($forumArray) : 0;
+                        
+                        // Získat dostupné dialogy
+                        $availableDialogs = \Texyla\TexylaConfigFactory::getAvailableDialogs('admin');
+                        
+                    } catch (Exception $e) {
+                        $systemStatus['admin_buttons'] = 0;
+                        $systemStatus['forum_buttons'] = 0;
+                        error_log('Texyla Demo: Error counting buttons: ' . $e->getMessage());
+                    }
+                    
                     // Demo obsah
                     $demoAdminContent = file_exists(__DIR__ . '/../demos/admin-demo.texy') 
                         ? file_get_contents(__DIR__ . '/../demos/admin-demo.texy')
-                        : "# Admin Demo\n\n**Toto** je *demo* pro admin kontext.\n\nOdkaz na [Texy!](https://texy.info)\n\n> Citace\n\n- Seznam\n- Položky";
+                        : "# Admin Demo\n\n**Toto** je *demo* pro admin kontext.\n\nOdkaz na [Texy!](https://texy.info)\n\n> Citace\n\n- Seznam\n- Položky\n\n\`inline kód\`\n\n```\n// blok kódu\nfunction test() {\n    return 'Hello';\n}\n```";
                     
                     $demoForumContent = file_exists(__DIR__ . '/../demos/forum-demo.texy')
                         ? file_get_contents(__DIR__ . '/../demos/forum-demo.texy')
-                        : "**Fórum** demo\n\n> Citace od uživatele\n\n`inline kód`\n\nOdkaz na [GitHub](https://github.com)";
+                        : "**Fórum** demo\n\n> Citace od uživatele\n\n\`inline kód\`\n\nOdkaz na [GitHub](https://github.com)";
                     
                 } catch (Exception $e) {
                     $error = $e->getMessage();
@@ -125,6 +123,8 @@ try {
 $systemStatus['php_version'] = phpversion();
 $systemStatus['has_texy'] = $hasTexy;
 $systemStatus['has_factory'] = $hasTexylaFactory;
+$systemStatus['texyla_version'] = TEXYLA_DEMO_VERSION;
+$systemStatus['environment'] = TEXYLA_DEMO_ENV;
 
 // ============================================
 // 3. ZPRACOVÁNÍ FORMULÁŘE
@@ -168,9 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Texyla Demo - Automatická konfigurace</title>
-<script src="./../assets/texyla.js?v=<?= time() ?>"></script>
-<script src="./../assets/TexylaDialog.js?v=<?= time() ?>"></script> <!-- pokud existuje -->
+    <title>Texyla Demo <?= TEXYLA_DEMO_VERSION ?> - Automatická konfigurace s dialogy</title>
     
     <!-- TEXYLA CORE CSS (jádro knihovny) -->
     <link rel="stylesheet" href="../assets/style.css">
@@ -193,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .demo-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
@@ -225,9 +223,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             backdrop-filter: blur(10px);
         }
         
-        .auto-config-badge {
+        .version-badge {
             display: inline-block;
             background: #2ecc71;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        .dialog-badge {
+            display: inline-block;
+            background: #9b59b6;
             color: white;
             padding: 0.25rem 0.75rem;
             border-radius: 1rem;
@@ -244,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 2rem;
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .demo-editors {
                 grid-template-columns: 1fr;
             }
@@ -255,6 +265,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: 1rem;
             padding: 1.5rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
         }
         
         .editor-card h2 {
@@ -279,6 +291,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .editor-info h3 {
             color: #276749;
             margin-bottom: 0.5rem;
+        }
+        
+        .dialogs-info {
+            background: #e6fffa;
+            border-left: 4px solid #81e6d9;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .dialogs-info h3 {
+            color: #234e52;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dialogs-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .dialog-tag {
+            background: #81e6d9;
+            color: #234e52;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
         }
         
         .submit-btn {
@@ -361,6 +403,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #2c5282;
         }
         
+        .status-badge--purple {
+            background: #e9d8fd;
+            color: #44337a;
+        }
+        
         .footer {
             text-align: center;
             margin-top: 3rem;
@@ -398,6 +445,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin: 1.5rem 0;
             color: #856404;
         }
+        
+        .keyboard-shortcuts {
+            background: #fffaf0;
+            border: 2px solid #ed8936;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .keyboard-shortcuts h3 {
+            color: #c05621;
+            margin-bottom: 0.5rem;
+        }
+        
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.5rem 0;
+            padding: 0.25rem 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        
+        .shortcut-key {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            background: #edf2f7;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -405,17 +482,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- HLAVIČKA -->
         <header class="demo-header">
             <h1>🎯 Texyla Demo 
-                <span class="auto-config-badge">AUTO-CONFIG</span>
+                <span class="version-badge">v<?= TEXYLA_DEMO_VERSION ?></span>
+                <span class="dialog-badge">+DIALOGY</span>
             </h1>
-            <p>Moderní WYSIWYM editor pro Texy! syntax</p>
+            <p>Moderní WYSIWYM editor pro Texy! syntax s univerzálními dialogy</p>
             <div class="dream-team">Petr & Bó Dream Team</div>
         </header>
         
         <!-- INFO O AUTOMATICKÉ KONFIGURACI -->
         <div class="auto-config-info">
-            <h3>🚀 100% Automatická konfigurace</h3>
+            <h3>🚀 100% Automatická konfigurace + Dialogový systém</h3>
             <p>Žádný <code>config.php</code>! Texyla se automaticky nakonfiguruje z Texy! instance pomocí <code>TexylaConfigFactory</code>.</p>
-            <p><strong>Jak to funguje:</strong> Texyla zjistí co Texy! umí (<code>$texy->allowed[]</code>) a automaticky vygeneruje toolbar tlačítka.</p>
+            <p><strong>Nové:</strong> Dialogová tlačítka (🔗, 🖼️, H, </>+) otevírají uživatelsky přívětivé formuláře.</p>
         </div>
         
         <!-- STATUS BAR -->
@@ -435,6 +513,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span>Automatická konfigurace:</span>
                 <span class="status-badge <?= $hasTexylaFactory ? 'status-badge--success' : 'status-badge--warning' ?>">
                     <?= $hasTexylaFactory ? '✅ Dostupné' : '⚠️ Základní' ?>
+                </span>
+            </div>
+            
+            <div class="status-item">
+                <span>Dialogy:</span>
+                <span class="status-badge status-badge--purple">
+                    <?= count($availableDialogs) ?> typů
                 </span>
             </div>
             
@@ -465,6 +550,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
         </div>
         
+        <!-- KEYBOARD SHORTCUTS -->
+        <div class="keyboard-shortcuts">
+            <h3>⌨️ Klávesové zkratky</h3>
+            <div class="shortcut-item">
+                <span>Přepnout náhled</span>
+                <code class="shortcut-key">Ctrl + P</code>
+            </div>
+            <div class="shortcut-item">
+                <span>Tučný text (coming soon)</span>
+                <code class="shortcut-key">Ctrl + B</code>
+            </div>
+            <div class="shortcut-item">
+                <span>Kurzíva (coming soon)</span>
+                <code class="shortcut-key">Ctrl + I</code>
+            </div>
+            <div class="shortcut-item">
+                <span>Odkaz (coming soon)</span>
+                <code class="shortcut-key">Ctrl + K</code>
+            </div>
+        </div>
+        
         <?php if (!$hasTexy): ?>
         <div class="warning-box">
             <h3>⚠️ Texy! není nainstalována</h3>
@@ -481,7 +587,7 @@ composer require texy/texy</pre>
                 <!-- EDITOR 1: ADMIN -->
                 <div class="editor-card">
                     <h2>
-                        📝 Editor: Admin (plná syntaxe)
+                        📝 Editor: Admin (plná syntaxe + dialogy)
                         <?php if (isset($systemStatus['admin_buttons'])): ?>
                         <span class="status-badge status-badge--info">
                             <?= $systemStatus['admin_buttons'] ?> tlačítek
@@ -494,13 +600,26 @@ composer require texy/texy</pre>
                         <?php if ($hasTexylaFactory): ?>
                         <ul>
                             <li><strong>Plná syntaxe</strong> (nadpisy, obrázky, tabulky, kód)</li>
+                            <li><strong>4 dialogy</strong> (odkazy, obrázky, nadpisy, bloky kódu)</li>
                             <li><strong>Bezpečnostní filtry</strong> (žádné HTML, CSS, JS)</li>
-                            <li><strong>Automatické tlačítka</strong> podle <code>$texy->allowed[]</code></li>
                         </ul>
                         <?php else: ?>
                         <p><em>Základní konfigurace (TexylaConfigFactory není dostupný)</em></p>
                         <?php endif; ?>
                     </div>
+                    
+                    <?php if (!empty($availableDialogs)): ?>
+                    <div class="dialogs-info">
+                        <h3>🎯 Dialogová tlačítka (klikni pro otevření):</h3>
+                        <div class="dialogs-list">
+                            <?php foreach ($availableDialogs as $dialogType => $dialogTitle): ?>
+                            <span class="dialog-tag" title="<?= htmlspecialchars($dialogTitle) ?>">
+                                <?= htmlspecialchars($dialogType) ?>
+                            </span>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                     
                     <label for="editor1" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
                         Obsah článku:
@@ -510,10 +629,10 @@ composer require texy/texy</pre>
                         id="editor1" 
                         name="content_admin" 
                         class="texyla-textarea"
-                        rows="12"
+                        rows="15"
                         data-context="admin"
-                        data-texyla-config="<?= $configAdmin; ?>"
-                        style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-family: 'Courier New', monospace;"
+                        data-texyla-config="<?= $configAdmin ?>"
+                        style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-family: 'Courier New', monospace; resize: vertical;"
                     ><?= texyla_escape_textarea($originalInput['admin']) ?></textarea>
                     
                     <div class="texyla__preview" data-for="editor1" style="margin-top: 1rem;"></div>
@@ -536,6 +655,7 @@ composer require texy/texy</pre>
                         <ul>
                             <li><strong>Základní formátování</strong> (tučné, kurzíva, kód)</li>
                             <li><strong>Odkazy povoleny</strong>, obrázky zakázány</li>
+                            <li><strong>Žádné dialogy</strong> - pouze inline markery</li>
                             <li><strong>Žádné bloky kódu</strong>, tabulky nebo nadpisy</li>
                         </ul>
                         <?php else: ?>
@@ -551,10 +671,10 @@ composer require texy/texy</pre>
                         id="editor2" 
                         name="content_forum" 
                         class="texyla-textarea"
-                        rows="12"
+                        rows="15"
                         data-context="forum"
-                        data-texyla-config="<?= $configForum; ?>"
-                        style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-family: 'Courier New', monospace;"
+                        data-texyla-config="<?= $configForum ?>"
+                        style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-family: 'Courier New', monospace; resize: vertical;"
                     ><?= texyla_escape_textarea($originalInput['forum']) ?></textarea>
                     
                     <div class="texyla__preview" data-for="editor2" style="margin-top: 1rem;"></div>
@@ -563,7 +683,7 @@ composer require texy/texy</pre>
             
             <!-- TLAČÍTKO -->
             <button type="submit" class="submit-btn">
-                📤 Odeslat a zpracovat na serveru
+                📤 Odeslat a zpracovat na serveru (Texy! → HTML)
             </button>
         </form>
         
@@ -574,15 +694,15 @@ composer require texy/texy</pre>
             <p><small>Níže vidíte HTML výstup z Texy! (to co by se uložilo do databáze)</small></p>
             
             <div class="result-item">
-                <h3>Admin výstup (plná syntaxe):</h3>
-                <div style="padding: 1.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem;">
+                <h3>Admin výstup (plná syntaxe + dialogy):</h3>
+                <div style="padding: 1.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow-x: auto;">
                     <?= $processedOutput['admin'] ?>
                 </div>
             </div>
             
             <div class="result-item">
                 <h3>Forum výstup (omezená syntaxe):</h3>
-                <div style="padding: 1.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem;">
+                <div style="padding: 1.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow-x: auto;">
                     <?= $processedOutput['forum'] ?>
                 </div>
             </div>
@@ -600,7 +720,10 @@ composer require texy/texy</pre>
                 <span>Konfigurace generována: <?= $hasTexylaFactory ? 'ANO (TexylaConfigFactory)' : 'NE (základní)' ?></span>
             </div>
             <div class="status-item">
-                <span>Editory: 2 (Texyla Vanilla JS)</span>
+                <span>Editory: 2 (Texyla Vanilla JS + Dialogy)</span>
+            </div>
+            <div class="status-item">
+                <span>Dialogy: <?= count($availableDialogs) ?> (link, image, heading, code-block)</span>
             </div>
             <div class="status-item">
                 <span>Endpoint: <code>/src/TexylaController.php</code></span>
@@ -609,32 +732,49 @@ composer require texy/texy</pre>
         
         <!-- PATIČKA -->
         <footer class="footer">
-            <p>© <?= date('Y') ?> Texyla Rewrite Dream Team</p>
+            <p>© <?= date('Y') ?> Texyla Rewrite Dream Team • v<?= TEXYLA_DEMO_VERSION ?> • <?= TEXYLA_DEMO_ENV ?></p>
             <p>
-                <strong>🚀 100% Automatická konfigurace - žádný config.php!</strong>
+                <strong>🚀 100% Automatická konfigurace + Dialogový systém</strong>
             </p>
             <p>
                 <a href="https://github.com/your-repo/texyla-rewrite" target="_blank">GitHub</a> | 
                 <a href="https://texy.info" target="_blank">Texy! dokumentace</a> | 
+                <a href="?debug=1">Debug mode</a> | 
                 <a href="?">Znovu načíst</a>
             </p>
         </footer>
     </div>
     
+    <!-- TEXYLA JAVASCRIPT KNIHOVNY -->
+    <script src="../assets/texyla.js?v=<?= time() ?>"></script>
+    <script src="../assets/TexylaDialog.js?v=<?= time() ?>"></script>
     
-    <!-- INICIALIZACE EDITORŮ -->
+    <!-- INICIALIZACE EDITORŮ S DIALOGY -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('🚀 Inicializace Texyla editorů (automatická konfigurace)...');
+        console.log('🚀 Inicializace Texyla editorů s dialogovým systémem...');
         
         const previewEndpoint = '../src/TexylaController.php';
         const editors = [
-            { id: 'editor1', config: '<?= texyla_escape_attr($configAdmin) ?>' },
-            { id: 'editor2', config: '<?= texyla_escape_attr($configForum) ?>' }
+            { 
+                id: 'editor1', 
+                config: <?= json_encode($configAdmin) ?>,
+                context: 'admin',
+                hasDialogs: true
+            },
+            { 
+                id: 'editor2', 
+                config: <?= json_encode($configForum) ?>,
+                context: 'forum',
+                hasDialogs: false
+            }
         ];
         
         let initialized = 0;
         let errors = [];
+        
+        // Globální reference na editory pro debugování
+        window.texylaEditors = {};
         
         editors.forEach(function(editorInfo) {
             const textarea = document.getElementById(editorInfo.id);
@@ -647,7 +787,16 @@ composer require texy/texy</pre>
             try {
                 // Vytvořit editor
                 const editor = new TexylaVanilla(textarea, previewEndpoint);
-                console.log('✅ Editor inicializován:', editorInfo.id);
+                
+                // Rozšířit editor o dialogové funkce
+                if (editorInfo.hasDialogs) {
+                    enhanceEditorWithDialogs(editor, editorInfo.id);
+                }
+                
+                // Uložit referenci pro debug
+                window.texylaEditors[editorInfo.id] = editor;
+                
+                console.log('✅ Editor inicializován:', editorInfo.id, editorInfo.hasDialogs ? '(s dialogy)' : '(bez dialogů)');
                 initialized++;
                 
             } catch (error) {
@@ -668,8 +817,73 @@ composer require texy/texy</pre>
             console.warn('Chyby:', errors);
         }
         
+        // Dialogové funkce
+        function enhanceEditorWithDialogs(editor, editorId) {
+            // Přepsat _handleButtonClick pro podporu dialogů
+            const originalHandleButtonClick = editor._handleButtonClick;
+            
+            editor._handleButtonClick = function(button) {
+                const marker = button.dataset.marker;
+                
+                // Pokud je marker DIALOG:xxx, otevři dialog
+                if (marker && marker.startsWith('DIALOG:')) {
+                    const dialogType = marker.replace('DIALOG:', '');
+                    this._openDialog(dialogType);
+                    return;
+                }
+                
+                // Jinak použij původní chování
+                originalHandleButtonClick.call(this, button);
+            };
+            
+            // Implementace _openDialog
+            editor._openDialog = function(type) {
+                console.log('Opening dialog:', type);
+                
+                const selectedText = this._getSelectedText();
+                const defaults = {};
+                
+                // Nastavit výchozí hodnoty podle typu dialogu
+                if (type === 'link') {
+                    defaults.text = selectedText;
+                } else if (type === 'code-block') {
+                    defaults.content = selectedText;
+                } else if (type === 'heading') {
+                    defaults.text = selectedText;
+                    defaults.level = 3;
+                }
+                
+                // Vytvořit a zobrazit dialog
+                const dialog = new TexylaDialog(type, {
+                    onSubmit: (result) => {
+                        console.log('Dialog result:', result);
+                        this._wrapSelection(result.syntax);
+                    },
+                    defaults: defaults
+                });
+                
+                dialog.show();
+            };
+            
+            console.log(`✅ Dialogový systém připojen k editoru ${editorId}`);
+        }
+        
         // Keyboard shortcuts info
-        console.log('⌨️ Klávesové zkratky: Ctrl+B (tučné), Ctrl+I (kurzíva), Ctrl+P (náhled)');
+        console.log('⌨️ Klávesové zkratky: Ctrl+P (náhled), dialogy: 🔗, 🖼️, H, </>+');
+        
+        // Debug funkce pro vývojáře
+        window.debugTexyla = function() {
+            console.log('=== TEXYLA DEBUG ===');
+            console.log('Editors:', window.texylaEditors);
+            console.log('TexylaVanilla:', typeof TexylaVanilla);
+            console.log('TexylaDialog:', typeof TexylaDialog);
+            
+            // Test dialogu
+            if (window.texylaEditors.editor1) {
+                console.log('Test dialogu: otevírám link dialog');
+                window.texylaEditors.editor1._openDialog('link');
+            }
+        };
     });
     </script>
 </body>
