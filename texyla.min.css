@@ -1,0 +1,5 @@
+/* texyla.min.css - všechny styly v jednom */
+@import url('core.css');
+@import url('toolbar.css');
+@import url('dialogs.css');
+@import url('errors.css');
