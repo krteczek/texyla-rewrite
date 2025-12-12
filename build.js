@@ -12,6 +12,7 @@ esbuild.build({
 });
 
 // Production build (jediný soubor)
+// build.js - aktualizovaný
 esbuild.build({
     entryPoints: ['src/texyla-bundle.js'],
     bundle: true,
@@ -19,5 +20,9 @@ esbuild.build({
     format: 'iife',
     globalName: 'Texyla',
     minify: true,
-    treeShaking: true
+    treeShaking: true,
+    define: {
+        'TEXYLA_ENDPOINT': '"/src/TexylaController.php"',
+        'TEXYLA_VERSION': '"1.0.0"'
+    }
 });
