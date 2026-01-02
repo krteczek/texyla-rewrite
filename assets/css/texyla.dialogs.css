@@ -1,0 +1,373 @@
+/* texyla.dialogs.css */
+
+/* ============================================
+   OVERLAY & ANIMATIONS
+   ============================================ */
+@keyframes texyla-dialog-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes texyla-dialog-slide-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes texyla-dialog-shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.texyla-dialog-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 9998 !important;
+    animation: texyla-dialog-fade-in 0.2s ease !important;
+}
+
+/* ============================================
+   DIALOG CONTAINER
+   ============================================ */
+.texyla-dialog {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    background: white !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+    z-index: 9999 !important;
+    animation: texyla-dialog-slide-in 0.3s ease !important;
+    width: 90% !important;
+    max-width: 500px !important;
+    max-height: 90vh !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.texyla-dialog__container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.texyla-dialog__header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1.25rem 1.5rem !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: white !important;
+    flex-shrink: 0 !important;
+}
+
+.texyla-dialog__title {
+    margin: 0 !important;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+    line-height: 1.2 !important;
+}
+
+.texyla-dialog__close {
+    background: none !important;
+    border: none !important;
+    font-size: 1.75rem !important;
+    line-height: 1 !important;
+    color: #a0aec0 !important;
+    cursor: pointer !important;
+    padding: 0.25rem !important;
+    margin: -0.25rem !important;
+    border-radius: 0.25rem !important;
+    transition: all 0.15s ease !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.texyla-dialog__close:hover {
+    color: #4a5568 !important;
+    background: #f7fafc !important;
+}
+
+.texyla-dialog__close:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5) !important;
+}
+
+/* ============================================
+   BODY
+   ============================================ */
+.texyla-dialog__body {
+    padding: 1.5rem !important;
+    overflow-y: auto !important;
+    flex-grow: 1 !important;
+}
+
+.texyla-dialog__form {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+}
+
+/* ============================================
+   FORM FIELDS
+   ============================================ */
+.texyla-dialog__field {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+.texyla-dialog__label {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #4a5568 !important;
+    display: block !important;
+}
+
+.texyla-dialog__input,
+.texyla-dialog__select,
+.texyla-dialog__textarea {
+    width: 100% !important;
+    padding: 0.625rem 0.875rem !important;
+    border: 1px solid #cbd5e0 !important;
+    border-radius: 0.5rem !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.5 !important;
+    color: #2d3748 !important;
+    background: white !important;
+    transition: all 0.15s ease !important;
+    font-family: inherit !important;
+}
+
+.texyla-dialog__input:focus,
+.texyla-dialog__select:focus,
+.texyla-dialog__textarea:focus {
+    outline: none !important;
+    border-color: #4299e1 !important;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1) !important;
+}
+
+.texyla-dialog__input::placeholder,
+.texyla-dialog__textarea::placeholder {
+    color: #a0aec0 !important;
+}
+
+.texyla-dialog__textarea {
+    min-height: 120px !important;
+    resize: vertical !important;
+}
+
+.texyla-dialog__select {
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.875rem center !important;
+    background-size: 1rem !important;
+    padding-right: 2.5rem !important;
+}
+
+/* ============================================
+   CHECKBOXES & RADIOS
+   ============================================ */
+.texyla-dialog__field--inline {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+}
+
+.texyla-dialog__checkbox,
+.texyla-dialog__radio {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    cursor: pointer !important;
+    font-size: 0.875rem !important;
+    color: #4a5568 !important;
+    user-select: none !important;
+}
+
+.texyla-dialog__checkbox input[type="checkbox"],
+.texyla-dialog__radio input[type="radio"] {
+    margin: 0 !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    cursor: pointer !important;
+}
+
+.texyla-dialog__radio-group {
+    display: flex !important;
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+}
+
+.texyla-dialog__radio-label {
+    display: inline-block !important;
+    padding: 0.25rem 0.5rem !important;
+    background: #f7fafc !important;
+    border-radius: 0.25rem !important;
+    border: 1px solid transparent !important;
+    transition: all 0.15s ease !important;
+}
+
+.texyla-dialog__radio input:checked + .texyla-dialog__radio-label {
+    background: #4299e1 !important;
+    color: white !important;
+    border-color: #4299e1 !important;
+}
+
+/* ============================================
+   HINTS & ERRORS
+   ============================================ */
+.texyla-dialog__hint {
+    font-size: 0.75rem !important;
+    color: #a0aec0 !important;
+    margin-top: 0.25rem !important;
+    line-height: 1.4 !important;
+}
+
+.texyla-dialog__hint kbd {
+    background: #edf2f7 !important;
+    border: 1px solid #cbd5e0 !important;
+    border-radius: 0.25rem !important;
+    padding: 0.125rem 0.375rem !important;
+    font-size: 0.6875rem !important;
+    font-family: monospace !important;
+    color: #4a5568 !important;
+}
+
+.texyla-dialog__error {
+    background: #fed7d7 !important;
+    border: 1px solid #f56565 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.875rem 1rem !important;
+    margin-bottom: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    animation: texyla-dialog-shake 0.5s ease !important;
+}
+
+.texyla-dialog__error-icon {
+    font-size: 1rem !important;
+    flex-shrink: 0 !important;
+}
+
+.texyla-dialog__error-text {
+    font-size: 0.875rem !important;
+    color: #742a2a !important;
+    font-weight: 500 !important;
+}
+
+/* ============================================
+   ACTIONS (FOOTER)
+   ============================================ */
+.texyla-dialog__footer {
+    padding: 1rem 1.5rem !important;
+    border-top: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    flex-shrink: 0 !important;
+}
+
+.texyla-dialog__actions {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 0.75rem !important;
+}
+
+.texyla-dialog__button {
+    padding: 0.625rem 1.25rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 0.9375rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    border: 1px solid transparent !important;
+    font-family: inherit !important;
+}
+
+.texyla-dialog__button--cancel {
+    background: white !important;
+    border-color: #cbd5e0 !important;
+    color: #4a5568 !important;
+}
+
+.texyla-dialog__button--cancel:hover {
+    background: #f7fafc !important;
+    border-color: #a0aec0 !important;
+    color: #2d3748 !important;
+}
+
+.texyla-dialog__button--submit {
+    background: #4299e1 !important;
+    color: white !important;
+    border-color: #4299e1 !important;
+}
+
+.texyla-dialog__button--submit:hover {
+    background: #3182ce !important;
+    border-color: #3182ce !important;
+}
+
+.texyla-dialog__button:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5) !important;
+}
+
+.texyla-dialog__button:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 640px) {
+    .texyla-dialog {
+        width: 95% !important;
+        max-height: 85vh !important;
+        border-radius: 0.5rem !important;
+    }
+    
+    .texyla-dialog__header {
+        padding: 1rem 1.25rem !important;
+    }
+    
+    .texyla-dialog__body {
+        padding: 1.25rem !important;
+    }
+    
+    .texyla-dialog__footer {
+        padding: 0.875rem 1.25rem !important;
+    }
+    
+    .texyla-dialog__title {
+        font-size: 1.125rem !important;
+    }
+    
+    .texyla-dialog__actions {
+        flex-direction: column !important;
+    }
+    
+    .texyla-dialog__button {
+        width: 100% !important;
+    }
+}

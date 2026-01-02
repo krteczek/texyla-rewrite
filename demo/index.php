@@ -33,10 +33,17 @@ function texyla_escape_textarea(string $text): string {
 
 // Funkce pro bezpečné escapování atributů (s kontrolou double escaping)
 function texyla_escape_attr(string $text): string {
-    // Pokud text už obsahuje HTML entity, neescapuj znovu
-    if (preg_match('/&(?:[a-z]+|#\d+);/i', $text)) {
+    // Pokud text už obsahuje HTML entity (&quot;, &amp;), neescapuj znovu
+    if (strpos($text, '&quot;') !== false || strpos($text, '&amp;') !== false) {
         return $text;
     }
+    
+    // Pokud text je JSON (začíná [ nebo {), použij ENT_NOQUOTES
+    if ($text !== '' && ($text[0] === '[' || $text[0] === '{')) {
+        return htmlspecialchars($text, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+    
+    // Normální atribut
     return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
@@ -55,6 +62,11 @@ $availableDialogs = [];
 
 // Načíst autoloader
 $autoloadPath = __DIR__ . '/../vendor/autoload.php';
+
+
+$demoTexy = TexylaTexyFactory::createForContext('admin');
+$configAdmin = TexylaToolbarGenerator::fromTexy($demoTexy);
+
 if (file_exists($autoloadPath)) {
     require_once $autoloadPath;
     
@@ -631,7 +643,7 @@ composer require texy/texy</pre>
                         class="texyla-textarea"
                         rows="15"
                         data-context="admin"
-                        data-texyla-config="<?= $configAdmin ?>"
+                        data-texyla-config='<?= $configAdmin ?>'
                         style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-family: 'Courier New', monospace; resize: vertical;"
                     ><?= texyla_escape_textarea($originalInput['admin']) ?></textarea>
                     
@@ -673,7 +685,7 @@ composer require texy/texy</pre>
                         class="texyla-textarea"
                         rows="15"
                         data-context="forum"
-                        data-texyla-config="<?= $configForum ?>"
+                        data-texyla-config='<?= $configForum ?>'
                         style="width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-family: 'Courier New', monospace; resize: vertical;"
                     ><?= texyla_escape_textarea($originalInput['forum']) ?></textarea>
                     
