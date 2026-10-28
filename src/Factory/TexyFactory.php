@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Texyla;
+namespace Texyla\Factory;
 
-class TexylaTexyFactory
+class TexyFactory
 {
     /**
      * Vytvoří správně nakonfigurovanou Texy! instanci pro daný kontext
