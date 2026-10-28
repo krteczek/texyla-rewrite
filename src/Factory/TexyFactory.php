@@ -1,77 +1,122 @@
 <?php
+/**
+ * Vytváří Texy! instance podle profilu (admin / forum / codeforum / default).
+ */
+
 declare(strict_types=1);
 
 namespace Texyla\Factory;
 
+use Texy\Texy;
+
 class TexyFactory
 {
+    public const PROFILES = ['admin', 'forum', 'codeforum', 'default'];
+
     /**
-     * Vytvoří správně nakonfigurovanou Texy! instanci pro daný kontext
+     * @param string $profile admin|forum|codeforum|default
      */
-    public static function createForContext(string $context): \Texy\Texy
+    public static function createForProfile(string $profile): Texy
     {
-        $texy = new \Texy\Texy();
-        
-        // Výchozí nastavení pro všechny kontexty
-        $texy->headingModule->top = 3; // H1-H3
-        $texy->mergeLines = true; // Spojování řádků
-        $texy->obfuscateEmail = true; // Ochrana emailů
-        
-        // Povolené elementy podle kontextu
-        $allowed = self::getAllowedElements($context);
-        foreach ($allowed as $element => $isAllowed) {
+        if (!in_array($profile, self::PROFILES, true)) {
+            $profile = 'default';
+        }
+
+        $texy = new Texy();
+
+        // společné výchozí nastavení
+        $texy->headingModule->top = 3;
+        $texy->mergeLines = true;
+        $texy->obfuscateEmail = true;
+
+        foreach (self::getAllowedElements($profile) as $element => $isAllowed) {
             $texy->allowed[$element] = $isAllowed;
         }
-        
+
         return $texy;
     }
-    
-    private static function getAllowedElements(string $context): array
+
+    /** Alias kvůli staršímu názvu */
+    public static function createForContext(string $context): Texy
+    {
+        return self::createForProfile($context);
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    private static function getAllowedElements(string $profile): array
     {
         $presets = [
+            // plný editor (admin, CMS, …)
             'admin' => [
                 'phrase/strong' => true,
-                'phrase/em' => true,
-                'phrase/code' => true,
-                'phrase/sup' => true,
-                'phrase/sub' => true,
-                'image' => true,
-                'link' => true,
-                'block/code' => true,
-                'block/quote' => true,
-                'heading' => true,
-                'list' => true,
-                'table' => true,
-                'horizline' => true,
+                'phrase/em'     => true,
+                'phrase/code'   => true,
+                'phrase/sup'    => true,
+                'phrase/sub'    => true,
+                'image'         => true,
+                'link'          => true,
+                'block/code'    => true,
+                'block/quote'   => true,
+                'heading'       => true,
+                'list'          => true,
+                'table'         => true,
+                'horizline'     => true,
             ],
+
+            // běžné fórum – bez obrázků, tabulek, nadpisů, bloků kódu
             'forum' => [
                 'phrase/strong' => true,
-                'phrase/em' => true,
-                'phrase/code' => true,
-                'image' => false,
-                'link' => true,
-                'block/code' => false,
-                'block/quote' => true,
-                'heading' => false,
-                'list' => true,
-                'table' => false,
-                'horizline' => false,
+                'phrase/em'     => true,
+                'phrase/code'   => true,
+                'phrase/sup'    => false,
+                'phrase/sub'    => false,
+                'image'         => false,
+                'link'          => true,
+                'block/code'    => false,
+                'block/quote'   => true,
+                'heading'       => false,
+                'list'          => true,
+                'table'         => false,
+                'horizline'     => false,
             ],
+
+            // fórum s kódem (jako forum + code block)
+            'codeforum' => [
+                'phrase/strong' => true,
+                'phrase/em'     => true,
+                'phrase/code'   => true,
+                'phrase/sup'    => false,
+                'phrase/sub'    => false,
+                'image'         => false,
+                'link'          => true,
+                'block/code'    => true,
+                'block/quote'   => true,
+                'heading'       => false,
+                'list'          => true,
+                'table'         => false,
+                'horizline'     => false,
+            ],
+
+            // minimum
             'default' => [
                 'phrase/strong' => true,
-                'phrase/em' => true,
-                'phrase/code' => true,
-                'image' => false,
-                'link' => true,
-                'block/code' => false,
-                'block/quote' => false,
-                'heading' => false,
-                'list' => false,
-                'table' => false,
-                'horizline' => false,
-            ]
+                'phrase/em'     => true,
+                'phrase/code'   => true,
+                'phrase/sup'    => false,
+                'phrase/sub'    => false,
+                'image'         => false,
+                'link'          => true,
+                'block/code'    => false,
+                'block/quote'   => false,
+                'heading'       => false,
+                'list'          => false,
+                'table'         => false,
+                'horizline'     => false,
+            ],
         ];
-        
-        return $presets[$context] ?? $presets['default'];
+
+        return $presets[$profile] ?? $presets['default'];
     }
 }

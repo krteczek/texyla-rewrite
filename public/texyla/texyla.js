@@ -1,21 +1,22 @@
 (function () {
   function loadTheme(theme) {
-    const href = `texyla/themes/${theme}/theme.css`;
-    if (document.querySelector(`link[href="${href}"]`)) return;
+    // relativně k demo.php → texyla/themes/...
+    const href = 'texyla/themes/' + theme + '/theme.css';
+    if (document.querySelector('link[data-texyla-theme="' + theme + '"]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = href;
+    link.dataset.texylaTheme = theme;
     document.head.appendChild(link);
   }
 
   function init(textarea) {
     const profile  = textarea.dataset.profile  || 'default';
     const theme    = textarea.dataset.theme    || 'default';
-    const endpoint = textarea.dataset.endpoint || '/texyla/texyla.php';
+    const endpoint = textarea.dataset.endpoint || 'texyla/texyla.php';
 
     loadTheme(theme);
 
-    // dočasně: tlačítko Náhled vedle textarea
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = 'Náhled';

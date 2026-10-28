@@ -63,17 +63,14 @@ if ($source === '') {
     exit;
 }
 
-// Zatím jednoduchá konfigurace přímo tady – Factory doplníme vzápětí
-$texy = new \Texy\Texy();
-$texy->headingModule->top = 3;
-$texy->mergeLines = true;
-$texy->obfuscateEmail = true;
+// ... po validaci $profile a prázdného $source ...
 
-// TODO: podle $profile vypnout/zapnout allowed – zatím plný režim
 try {
+    $texy = \Texyla\Factory\TexyFactory::createForProfile($profile);
     echo $texy->process($source);
 } catch (Throwable $e) {
     http_response_code(500);
+    error_log('Texyla preview: ' . $e->getMessage());
     echo '<div class="texyla-error"><p>❌ Chyba náhledu</p><small>'
         . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
         . '</small></div>';
