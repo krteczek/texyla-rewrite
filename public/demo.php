@@ -15,7 +15,7 @@ declare(strict_types=1);
         class="texyla"
         data-profile="admin"
         data-theme="default"
-        data-endpoint="<?php echo dirname(__FILE__) . '/texyla/texyla.php'; ?>"
+        data-endpoint="texyla/texyla.php"
         rows="12"
         cols="80"
         placeholder="Napiš Texy! syntax…"
@@ -24,6 +24,6 @@ declare(strict_types=1);
 Toto je *demo* editoru.</textarea>
 
     <!-- JS si podle data-theme / data-endpoint načte CSS a sám se inicializuje -->
-    <script src="<?php echo dirname(__FILE__) . '/texyla/texyla.js'; ?>"></script>
+    <script src="texyla/texyla.js"></script>
 </body>
 </html>

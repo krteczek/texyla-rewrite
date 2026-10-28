@@ -1,6 +1,6 @@
 (function () {
   function loadTheme(theme) {
-    const href = `${dirname(__FILE__)}/texyla/themes/${theme}/theme.css`;
+    const href = `texyla/themes/${theme}/theme.css`;
     if (document.querySelector(`link[href="${href}"]`)) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
