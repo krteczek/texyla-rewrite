@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Texyla;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ '/../../vendor/autoload.php';
 
 // Nastavení hlaviček pro JSON API
 header('Content-Type: text/html; charset=utf-8');
