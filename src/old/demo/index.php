@@ -1,4 +1,8 @@
 <?php
+declare(strict_types=1);
+use Src\Texy;
+use Texyla\TexylaConfigFactory;
+
 /**
  * Texyla Demo - KOMPLETNÍ VERZE S DIALOGY
  * 100% automatická konfigurace z Texy! pomocí TexylaConfigFactory
@@ -73,7 +77,7 @@ if (file_exists($autoloadPath)) {
     // Kontrola Texy
     if (class_exists('Texy\Texy')) {
         $hasTexy = true;
-        $systemStatus['texy_version'] = \Texy\Texy::VERSION;
+        $systemStatus['texy_version'] = Texy::VERSION;
         
         // Pokus o načtení TexylaConfigFactory
         $factoryPath = __DIR__ . '/../src/TexylaConfigFactory.php';
