@@ -1,0 +1,10 @@
+.texyla-preview {
+  background: #fafafa;
+  border-radius: 0.25rem;
+}
+.texyla-error {
+  color: #742a2a;
+  background: #fed7d7;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+}
