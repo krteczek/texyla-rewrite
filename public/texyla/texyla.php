@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_once __DIR__ . '/src/Factory/TexyFactory.php';
+require_once __DIR__ . '/texyla/src/Factory/TexyFactory.php';
 
 $input = file_get_contents('php://input');
 $data = json_decode($input ?: '[]', true) ?? [];
