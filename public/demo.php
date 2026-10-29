@@ -13,9 +13,16 @@ Odkaz s popiskem: "Texy oficiálně":[https://texy.info]
 Holý odkaz: https://texy.info
 Email: someone@example.com
 
+
 > Toto je citace.
 > Druhý řádek citace.
-> ."Autor citace"
+> "Autor citace"
+
+
+"(cite=https://wikipedia.org)
+Kdo chce hýbat světem, musí nejprve pohnout sám sebou.
+" -- Sokrates
+
 
 Neuspořádaný seznam:
 
@@ -37,10 +44,11 @@ termín:
   - vysvětlení jedna
   - vysvětlení dvě
 
-Tabulka:
+
+Příklad tabulky:
 
 | Jméno | Věk | Město
-|-------|----:|------
+|-------|-----|------
 | Ana   |  28 | Praha
 | Bořek |  35 | Brno
 
@@ -57,11 +65,11 @@ $x = 1 + 2;
 \---
 
 Alternativní code fence:
-´´´
+/---
 function hello() {
 return "world";
 }
-´´´
+\---
 
 Obrázek (admin):
 

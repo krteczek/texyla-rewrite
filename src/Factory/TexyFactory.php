@@ -45,78 +45,66 @@ class TexyFactory
     /**
      * @return array<string, bool>
      */
-    private static function getAllowedElements(string $profile): array
-    {
-        $presets = [
-            // plný editor (admin, CMS, …)
-            'admin' => [
-                'phrase/strong' => true,
-                'phrase/em'     => true,
-                'phrase/code'   => true,
-                'phrase/sup'    => true,
-                'phrase/sub'    => true,
-                'image'         => true,
-                'link'          => true,
-                'block/code'    => true,
-                'block/quote'   => true,
-                'heading'       => true,
-                'list'          => true,
-                'table'         => true,
-                'horizline'     => true,
-            ],
+private static function getAllowedElements(string $profile): array
+{
+    // výchozí „vypni vše rizikové / blokové“, pak profil něco zapne
+    $off = [
+        'phrase/strong'       => true,
+        'phrase/em'           => true,
+        'phrase/code'         => true,
+        'phrase/sup'          => false,
+        'phrase/sub'          => false,
+        'link'                => true,
+        'link/url'            => true,
+        'link/email'          => true,
+        'image'               => false,
+        'figure'              => false,
+        'heading/surrounded'  => false,
+        'heading/underlined'  => false,
+        'blockquote'          => false,
+        'list'                => false,
+        'list/definition'     => false,
+        'table'               => false,
+        'horizline'           => false,
+        'block/code'          => false,
+        'block/default'       => false,
+        'block/pre'           => false,
+        'html/tag'            => false,
+        'html/comment'        => false,
+    ];
 
-            // běžné fórum – bez obrázků, tabulek, nadpisů, bloků kódu
-            'forum' => [
-                'phrase/strong' => true,
-                'phrase/em'     => true,
-                'phrase/code'   => true,
-                'phrase/sup'    => false,
-                'phrase/sub'    => false,
-                'image'         => false,
-                'link'          => true,
-                'block/code'    => false,
-                'block/quote'   => true,
-                'heading'       => false,
-                'list'          => true,
-                'table'         => false,
-                'horizline'     => false,
-            ],
+    $presets = [
+        'admin' => array_merge($off, [
+            'phrase/sup'         => true,
+            'phrase/sub'         => true,
+            'image'              => true,
+            'figure'             => true,
+            'heading/surrounded' => true,
+            'heading/underlined' => true,
+            'blockquote'         => true,
+            'list'               => true,
+            'list/definition'    => true,
+            'table'              => true,
+            'horizline'          => true,
+            'block/code'         => true,
+            'block/pre'          => true,
+        ]),
 
-            // fórum s kódem (jako forum + code block)
-            'codeforum' => [
-                'phrase/strong' => true,
-                'phrase/em'     => true,
-                'phrase/code'   => true,
-                'phrase/sup'    => false,
-                'phrase/sub'    => false,
-                'image'         => false,
-                'link'          => true,
-                'block/code'    => true,
-                'block/quote'   => true,
-                'heading'       => false,
-                'list'          => true,
-                'table'         => false,
-                'horizline'     => false,
-            ],
+        'forum' => array_merge($off, [
+            'blockquote' => true,
+            'list'       => true,
+        ]),
 
-            // minimum
-            'default' => [
-                'phrase/strong' => true,
-                'phrase/em'     => true,
-                'phrase/code'   => true,
-                'phrase/sup'    => false,
-                'phrase/sub'    => false,
-                'image'         => false,
-                'link'          => true,
-                'block/code'    => false,
-                'block/quote'   => false,
-                'heading'       => false,
-                'list'          => false,
-                'table'         => false,
-                'horizline'     => false,
-            ],
-        ];
+        'codeforum' => array_merge($off, [
+            'blockquote'  => true,
+            'list'        => true,
+            'block/code'  => true,
+            'block/pre'   => true,
+        ]),
 
-        return $presets[$profile] ?? $presets['default'];
-    }
+        'default' => $off, // jen strong/em/code + linky
+    ];
+
+    return $presets[$profile] ?? $presets['default'];
+}
 }
