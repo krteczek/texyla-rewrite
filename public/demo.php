@@ -99,7 +99,7 @@ EOT;
 <h2>profil admin</h2>
 <div id="admin">
     <textarea
-        id="editor"
+        id="tx-admin"
         class="texyla"
         data-profile="admin"
         data-theme="default"
@@ -116,7 +116,7 @@ EOT;
 <h2>profil forum</h2>
 <div id="forum">
     <textarea
-        id="editor"
+        id="tx-forum"
         class="texyla"
         data-profile="forum"
         data-theme="default"
@@ -134,7 +134,7 @@ EOT;
 <h2>profil CodeForum</h2>
 <div id="codeforum">
     <textarea
-        id="editor"
+        id="tx-codeforum"
         class="texyla"
         data-profile="codeforum"
         data-theme="default"
@@ -152,7 +152,7 @@ EOT;
 <h2>profil default</h2>
 <div id="default">
     <textarea
-        id="editor"
+        id="tx-default"
         class="texyla"
         data-profile="default"
         data-theme="default"

@@ -84,7 +84,7 @@
       cursor = start + 3;
     } else if (marker === 'CODE') {
       insert = '/---code\n' + (selected || '') + '\n\\---';
-      cursor = start + 10;
+      cursor = start + ('/---code\n').length;
     } else if (marker === 'TABLE') {
       insert = '| sloupec 1 | sloupec 2\n|-----------|----------\n| buňka     | buňka';
       cursor = start + 2;
