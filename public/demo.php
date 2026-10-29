@@ -65,11 +65,11 @@ return "world";
 
 Obrázek (admin):
 
-[* https://texy.info/images/texy-logo.png .(Logo Texy) *]
+[* https://texy.deegee.dev/favicon.ico .(Logo Texy) *]
 
 Obrázek s odkazem:
 
-[* https://texy.info/images/texy-logo.png .(Logo) *]:[https://texy.info]
+[* https://texy.deegee.dev/favicon.ico .(Logo) *]:[https://texy.info]
 
 Dlouhý odstavec s typografií: "uvozovky", pomlčka - ať se projeví, výpustka..., násobení 5 x 3, nezlomitelná mezera u jednotek 10 kg.
 
@@ -96,6 +96,7 @@ EOT;
         data-profile="admin"
         data-theme="default"
         data-endpoint="texyla/texyla.php"
+        data-debug="1"
         rows="12"
         cols="80"
         placeholder="Napiš Texy! syntax…"
@@ -112,6 +113,7 @@ EOT;
         data-profile="forum"
         data-theme="default"
         data-endpoint="texyla/texyla.php"
+        data-debug="1"
         rows="12"
         cols="80"
         placeholder="Napiš Texy! syntax…"
@@ -129,6 +131,7 @@ EOT;
         data-profile="codeforum"
         data-theme="default"
         data-endpoint="texyla/texyla.php"
+        data-debug="1"
         rows="12"
         cols="80"
         placeholder="Napiš Texy! syntax…"
@@ -146,6 +149,7 @@ EOT;
         data-profile="default"
         data-theme="default"
         data-endpoint="texyla/texyla.php"
+        data-debug="1"
         rows="12"
         cols="80"
         placeholder="Napiš Texy! syntax…"

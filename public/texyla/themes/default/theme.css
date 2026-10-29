@@ -8,3 +8,22 @@
   padding: 0.75rem;
   border-radius: 0.25rem;
 }
+
+.texyla-preview-source-label {
+  margin: 1rem 0 0.25rem;
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.texyla-preview-source {
+  margin: 0;
+  padding: 0.75rem;
+  background: #1a202c;
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow-x: auto;
+  border-radius: 0.25rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
