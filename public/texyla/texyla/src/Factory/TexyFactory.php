@@ -12,6 +12,7 @@ use Texy\Texy;
 class TexyFactory
 {
     public const PROFILES = ['admin', 'forum', 'codeforum', 'default'];
+    public const HEADING_MODULE_TOP = 3;
 
     /**
      * @param string $profile admin|forum|codeforum|default
@@ -25,7 +26,7 @@ class TexyFactory
         $texy = new Texy();
 
         // společné výchozí nastavení
-        $texy->headingModule->top = 3;
+        $texy->headingModule->top = self::HEADING_MODULE_TOP;
         $texy->mergeLines = true;
         $texy->obfuscateEmail = true;
 
@@ -36,75 +37,158 @@ class TexyFactory
         return $texy;
     }
 
-    /** Alias kvůli staršímu názvu */
-    public static function createForContext(string $context): Texy
-    {
-        return self::createForProfile($context);
-    }
-
     /**
+     * Nastavení zpracování textu pomocí texy. 
+     * POZOR!!!
+     * Toto nastavení je funkční jen pro Texylu!!! 
+     * 
      * @return array<string, bool>
      */
-private static function getAllowedElements(string $profile): array
-{
-    // výchozí „vypni vše rizikové / blokové“, pak profil něco zapne
-    $off = [
-        'phrase/strong'       => true,
-        'phrase/em'           => true,
-        'phrase/code'         => true,
-        'phrase/sup'          => false,
-        'phrase/sub'          => false,
-        'link'                => true,
-        'link/url'            => true,
-        'link/email'          => true,
-        'image'               => false,
-        'figure'              => false,
-        'heading/surrounded'  => false,
-        'heading/underlined'  => false,
-        'blockquote'          => false,
-        'list'                => false,
-        'list/definition'     => false,
-        'table'               => false,
-        'horizline'           => false,
-        'block/code'          => false,
-        'block/default'       => false,
-        'block/pre'           => false,
-        'html/tag'            => false,
-        'html/comment'        => false,
-    ];
+    private static function getAllowedElements(string $profile): array
+    {
+        // výchozí „vypni vše“, pak profil něco zapne
+        $off = [
+            // --- phrase ---
+            'phrase/strong'          => false,
+            'phrase/strong+em'       => false,
+            'phrase/em'              => false,
+            'phrase/em-alt'          => false,
+            'phrase/em-alt2'         => false,
+            'phrase/ins'             => false,
+            'phrase/del'             => false,
+            'phrase/sup'             => false,
+            'phrase/sup-alt'         => false,
+            'phrase/sub'             => false,
+            'phrase/sub-alt'         => false,
+            'phrase/span'            => false,
+            'phrase/span-alt'        => false,
+            'phrase/quote'           => false,
+            'phrase/acronym'         => false,
+            'phrase/acronym-alt'     => false,
+            'phrase/notexy'          => false,
+            'phrase/code'            => false,
+            'phrase/quicklink'       => false,
+            'phrase/wikilink'        => false,
+            'phrase/markdown'        => false,
+            'phrase/escaped-asterix' => false,
 
-    $presets = [
-        'admin' => array_merge($off, [
-            'phrase/sup'         => true,
-            'phrase/sub'         => true,
-            'image'              => true,
-            'figure'             => true,
-            'heading/surrounded' => true,
-            'heading/underlined' => true,
-            'blockquote'         => true,
-            'list'               => true,
-            'list/definition'    => true,
-            'table'              => true,
-            'horizline'          => true,
-            'block/code'         => true,
-            'block/pre'          => true,
-        ]),
+            // --- odkazy ---
+            'link'                   => false,
+            'link/definition'        => false,
+            'link/reference'         => false,
+            'link/url'               => false,
+            'link/email'             => false,
 
-        'forum' => array_merge($off, [
-            'blockquote' => true,
-            'list'       => true,
-        ]),
+            // --- obrázky ---
+            'image'                  => false,
+            'image/definition'       => false,
+            'figure'                 => false,
 
-        'codeforum' => array_merge($off, [
-            'blockquote'  => true,
-            'list'        => true,
-            'block/code'  => true,
-            'block/pre'   => true,
-        ]),
+            // --- bloky ---
+            'block/default'          => false,
+            'block/pre'              => false,
+            'block/code'             => false,
+            'block/html'             => false,
+            'block/text'             => false,
+            'block/texysource'       => false,
+            'block/comment'          => false,
+            'block/div'              => false,
+            'blocks'                 => false,
+            'horizline'              => false,
+            'blockquote'             => false,
+            'table'                  => false,
 
-        'default' => $off, // jen strong/em/code + linky
-    ];
+            // --- nadpisy ---
+            'heading/underlined'     => false,
+            'heading/surrounded'     => false,
 
-    return $presets[$profile] ?? $presets['default'];
-}
+            // --- seznamy ---
+            'list'                   => false,
+            'list/definition'        => false,
+
+            // --- ostatní ---
+            'script'                 => false,
+            'html/tag'               => false,
+            'html/comment'           => false,
+            'emoticon'               => false,
+            'typography'             => false,
+            'longwords'              => false,
+        ];
+
+        /**
+         * Všechny klíče jsou vypnuté. 
+         * Pokud chcete něco povolit můžete v jednotlivých profilech přidat klíč a 
+         * nastavit u něj true
+         * */
+        $presets = [
+            'admin' => array_merge($off, [
+                'phrase/strong'      => true,
+                'phrase/em'          => true,
+                'phrase/code'        => true,
+                'phrase/sup'         => true,
+                'phrase/sub'         => true,
+                'link'               => true,
+                'link/url'           => true,
+                'link/email'         => true,
+                'image'              => true,
+                'figure'             => true,
+                'heading/surrounded' => true,
+                'heading/underlined' => true,
+                'blockquote'         => true,
+                'list'               => true,
+                'list/definition'    => true,
+                'table'              => true,
+                'horizline'          => true,
+                'block/code'         => true,
+                'block/pre'          => true,
+                'block/html'         => true,
+                'html/tag'           => true,
+                'html/comment'       => true,
+                'typography'         => true,
+                'longwords'          => true,
+            ]),
+
+            'forum' => array_merge($off, [
+                'phrase/strong'     => true,
+                'phrase/em'         => true,
+                'phrase/code'       => true,
+                'link'              => true,
+                'link/url'          => true,
+                'link/email'        => true,
+                'blockquote'        => true,
+                'list'              => true,
+                'list/definition'   => true,
+                'typography'        => true,
+                'longwords'         => true,
+            ]),
+
+            'codeforum' => array_merge($off, [
+                'phrase/strong'     => true,
+                'phrase/em'         => true,
+                'phrase/code'       => true,
+                'link'              => true,
+                'link/url'          => true,
+                'link/email'        => true,
+                'blockquote'        => true,
+                'list'              => true,
+                'list/definition'   => true,
+                'block/code'        => true,
+                'block/pre'         => true,
+                'typography'        => true,
+                'longwords'         => true,
+            ]),
+
+            'default' => array_merge($off, [
+                'phrase/strong' => true,
+                'phrase/em'     => true,
+                'phrase/code'   => true,
+                'link'          => true,
+                'link/url'      => true,
+                'link/email'    => true,
+                'typography'    => true,
+                'longwords'     => true,
+            ]),
+        ];
+        return $presets[$profile] ?? $presets['default'];
+    }
 }

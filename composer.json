@@ -1,18 +1,16 @@
 {
-    "name": "texyla/rewrite",
-    "description": "Moderní rewrite Texyla editoru bez jQuery - Dream Team Edition",
-    "type": "project",
+    "name": "petr/texyla-rewrite",
+    "description": "nová verze texyly, vanilla js, Texy3.2.6",
+    "type": "library",
+    "require": {
+        "texy/texy": "^3.2.6"
+    },
     "license": "MIT",
     "authors": [
         {
-            "name": "Petr & Bó Dream Team",
-            "role": "Developers"
+            "name": "Petr Vaněk",
+            "email": "krteczek01@gmail.com"
         }
     ],
-    "require": {
-        "php": "^8.1",
-        "texy/texy": "^3.2"
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+    "minimum-stability": "stable"
 }
