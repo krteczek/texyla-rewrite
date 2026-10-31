@@ -174,3 +174,16 @@
   border: 1px solid var(--texyla-warn-border);
   border-radius: var(--texyla-radius);
 }
+
+/* Hláška místo toolbaru (prázdné / chybějící nastavení) */
+.texyla-notice {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--texyla-warn-text);
+  background: var(--texyla-warn-bg);
+  border: 1px solid var(--texyla-warn-border);
+  border-bottom: none;
+  border-radius: var(--texyla-radius) var(--texyla-radius) 0 0;
+}

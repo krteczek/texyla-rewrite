@@ -5,17 +5,8 @@
  * Mapa tlačítek a jejich pořadí se načítá z config/buttons.js a config/order.js.
  * Žádné pevné profily – co je povolené v Texy, to se zobrazí.
  *
- * Všechny stavy konfigurace jsou ošetřeny vlastní hláškou:
- *   1. data-texyla-config chybí
- *   2. data-texyla-config je prázdný
- *   3. data-texyla-config je neplatný JSON
- *   4. JSON není objekt
- *   5. allowed chybí
- *   6. allowed není objekt
- *   7. allowed je prázdný
- *   8. allowed má vše false
- *   9. allowed má true, ale žádné tlačítko
- *  10. vše v pořádku – toolbar se zobrazí
+ * Všechny stavy konfigurace jsou ošetřeny vlastní hláškou.
+ * Zastaralý prohlížeč → textarea bez toolbaru + legacy notice.
  */
 (function () {
   'use strict';
@@ -36,6 +27,38 @@
     '^^': true,
     '__': true,
   };
+
+  // ---------------------------------------------------------------------------
+  // Podpora prohlížeče
+  // ---------------------------------------------------------------------------
+
+  function isTexylaSupported() {
+    return !!(
+      window.fetch &&
+      window.Promise &&
+      Object.assign &&
+      document.body &&
+      document.body.dataset &&
+      typeof document.querySelectorAll === 'function'
+    );
+  }
+
+  function showLegacyNotice() {
+    document.querySelectorAll('textarea.texyla').forEach(function (ta) {
+      var prev = ta.previousElementSibling;
+      if (prev && prev.classList && prev.classList.contains('texyla-legacy-notice')) {
+        return;
+      }
+      var note = document.createElement('p');
+      note.className = 'texyla-legacy-notice';
+      note.setAttribute('role', 'status');
+      note.textContent =
+        'Váš prohlížeč je zastaralý. Editor Texyla není k dispozici; ' +
+        'můžete psát přímo do pole níže (Texy! syntax). ' +
+        'Pro plný editor použijte aktuální Chrome, Firefox, Edge nebo Safari.';
+      ta.parentNode.insertBefore(note, ta);
+    });
+  }
 
   // ---------------------------------------------------------------------------
   // Téma
@@ -124,12 +147,6 @@
   }
 
   /**
-   * Sestaví toolbar z allowed.
-   *
-   * Projde ORDER (pevné pořadí) a přidá tlačítko jen tehdy, když:
-   *  1. klíč je v allowed pravdivý,
-   *  2. klíč má definici v BUTTONS.
-   *
    * @returns {{ bar: HTMLElement, count: number }}
    */
   function buildToolbar(allowed, textarea) {
@@ -165,11 +182,7 @@
   // ---------------------------------------------------------------------------
 
   /**
-   * Načte a zvaliduje data-texyla-config.
-   *
    * @returns {{ config: object|null, state: string|null }}
-   *   state: null (ok) | 'missing' | 'empty' | 'invalid-json' | 'not-object'
-   *        | 'missing-allowed' | 'invalid-allowed'
    */
   function parseConfig(textarea) {
     const raw = textarea.dataset.texylaConfig;
@@ -206,9 +219,7 @@
   }
 
   /**
-   * Vytvoří hlášku podle stavu konfigurace a výsledku toolbaru.
-   *
-   * @returns {HTMLElement|null} element hlášky nebo null (vše v pořádku)
+   * @returns {HTMLElement|null}
    */
   function buildNotice(state, allowed, buttonCount) {
     if (buttonCount > 0) {
@@ -260,7 +271,6 @@
       return notice;
     }
 
-    // state === null – config je v pořádku, ale toolbar je prázdný
     const allowedKeys = Object.keys(allowed);
     const allowedTrue = Object.values(allowed).some(function (v) { return v === true; });
 
@@ -301,7 +311,6 @@
     const parent = textarea.parentNode;
     parent.insertBefore(wrap, textarea);
 
-    // místo toolbaru vložíme hlášku, pokud není co zobrazit
     wrap.appendChild(notice || toolbar);
     wrap.appendChild(textarea);
     wrap.appendChild(btn);
@@ -334,7 +343,6 @@
     const endpoint = textarea.dataset.endpoint || 'texyla/texyla.php';
     const debug = textarea.dataset.debug === '1';
 
-    // 1. Načtení a validace konfigurace
     const parsed = parseConfig(textarea);
     const config = parsed.config;
     const configState = parsed.state;
@@ -343,22 +351,17 @@
       ? config.allowed
       : {};
 
-    // 2. Toolbar
     const built = buildToolbar(allowed, textarea);
     const toolbar = built.bar;
     const buttonCount = built.count;
 
-    // 3. Hláška podle stavu
     const notice = buildNotice(configState, allowed, buttonCount);
 
-    // 4. Téma
     loadTheme(theme);
 
-    // 5. UI
     const ui = createPreviewUI(textarea, toolbar, notice);
     let showingPreview = false;
 
-    // 6. Náhled
     ui.btn.addEventListener('click', async function () {
       if (showingPreview) {
         ui.preview.hidden = true;
@@ -423,6 +426,10 @@
   // ---------------------------------------------------------------------------
 
   function boot() {
+    if (!isTexylaSupported()) {
+      showLegacyNotice();
+      return;
+    }
     document.querySelectorAll('textarea.texyla').forEach(init);
   }
 
