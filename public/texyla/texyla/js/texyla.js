@@ -2,61 +2,30 @@
  * Texyla – editor k textarey pro Texy! syntaxi
  *
  * Toolbar se generuje dynamicky z data-texyla-config (config.allowed).
+ * Mapa tlačítek a jejich pořadí se načítá z config/buttons.js a config/order.js.
  * Žádné pevné profily – co je povolené v Texy, to se zobrazí.
+ *
+ * Všechny stavy konfigurace jsou ošetřeny vlastní hláškou:
+ *   1. data-texyla-config chybí
+ *   2. data-texyla-config je prázdný
+ *   3. data-texyla-config je neplatný JSON
+ *   4. JSON není objekt
+ *   5. allowed chybí
+ *   6. allowed není objekt
+ *   7. allowed je prázdný
+ *   8. allowed má vše false
+ *   9. allowed má true, ale žádné tlačítko
+ *  10. vše v pořádku – toolbar se zobrazí
  */
 (function () {
   'use strict';
 
-  /**
-   * Mapa: Texy klíč → tlačítko v toolbaru.
-   * Pokud klíč v allowed existuje a je true, tlačítko se zobrazí.
-   */
-  const BUTTONS = {
-    'phrase/strong':      { label: 'B',   marker: '**',    title: 'Tučné' },
-    'phrase/em':          { label: 'I',   marker: '*',     title: 'Kurzíva' },
-    'phrase/code':        { label: '</>', marker: '`',     title: 'Inline kód' },
-    'link':               { label: '🔗',  marker: 'LINK',  title: 'Odkaz' },
-    'image':              { label: '🖼️',  marker: 'IMAGE', title: 'Obrázek' },
-    'heading/surrounded': { label: 'H',   marker: '### ',  title: 'Nadpis' },
-    'heading/underlined': { label: 'H',   marker: '### ',  title: 'Nadpis' },
-    'blockquote':         { label: '❝',   marker: '> ',    title: 'Citace' },
-    'list':               { label: '•',   marker: '- ',    title: 'Seznam' },
-    'list/definition':    { label: '≡',   marker: 'DEF',   title: 'Definice' },
-    'block/code':         { label: '{ }', marker: 'CODE',  title: 'Blok kódu' },
-    'horizline':          { label: '―',   marker: '\n---\n', title: 'Oddělovač' },
-    'table':              { label: '▦',   marker: 'TABLE', title: 'Tabulka' },
-    'phrase/sup':         { label: 'x²',  marker: '^^',    title: 'Horní index' },
-    'phrase/sub':         { label: 'x₂',  marker: '__',    title: 'Dolní index' },
-  };
+  // ---------------------------------------------------------------------------
+  // Konfigurace – načteno z config/buttons.js a config/order.js
+  // ---------------------------------------------------------------------------
 
-  /**
-   * Pevné pořadí tlačítek. Klíče, které tu nejsou, se nezobrazí,
-   * i když jsou v allowed. Pořadí odpovídá běžnému workflow.
-   */
-  const ORDER = [
-    'phrase/strong',
-    'phrase/em',
-    'phrase/code',
-    'phrase/sup',
-    'phrase/sub',
-    'link',
-    'image',
-    'heading/surrounded',
-    'blockquote',
-    'list',
-    'list/definition',
-    'block/code',
-    'horizline',
-    'table',
-  ];
-
-  /** Výchozí sada, když data-texyla-config chybí. */
-  const DEFAULT_ALLOWED = {
-    'phrase/strong': true,
-    'phrase/em':     true,
-    'phrase/code':   true,
-    'link':          true,
-  };
+  const BUTTONS = window.TexylaButtons || {};
+  const ORDER   = window.TexylaOrder   || [];
 
   /** Markery, které se vkládají jako pár (prefix + suffix). */
   const PAIR_MARKERS = {
@@ -156,14 +125,19 @@
 
   /**
    * Sestaví toolbar z allowed.
-   * Projde ORDER, a pokud je klíč v allowed true a existuje BUTTONS[klíč],
-   * přidá tlačítko. Tím je zaručeno pevné pořadí i to, že se nezobrazí
-   * tlačítko, které Texy nezná.
+   *
+   * Projde ORDER (pevné pořadí) a přidá tlačítko jen tehdy, když:
+   *  1. klíč je v allowed pravdivý,
+   *  2. klíč má definici v BUTTONS.
+   *
+   * @returns {{ bar: HTMLElement, count: number }}
    */
   function buildToolbar(allowed, textarea) {
     const bar = document.createElement('div');
     bar.className = 'texyla-toolbar';
     bar.setAttribute('role', 'toolbar');
+
+    let count = 0;
 
     for (const key of ORDER) {
       if (!allowed[key]) {
@@ -180,16 +154,138 @@
         wrapOrInsert(textarea, def.marker);
       });
       bar.appendChild(btn);
+      count++;
     }
 
-    return bar;
+    return { bar: bar, count: count };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Validace konfigurace
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Načte a zvaliduje data-texyla-config.
+   *
+   * @returns {{ config: object|null, state: string|null }}
+   *   state: null (ok) | 'missing' | 'empty' | 'invalid-json' | 'not-object'
+   *        | 'missing-allowed' | 'invalid-allowed'
+   */
+  function parseConfig(textarea) {
+    const raw = textarea.dataset.texylaConfig;
+
+    if (raw === undefined) {
+      return { config: null, state: 'missing' };
+    }
+    if (raw.trim() === '') {
+      return { config: null, state: 'empty' };
+    }
+
+    let config;
+    try {
+      config = JSON.parse(raw);
+    } catch (e) {
+      return { config: null, state: 'invalid-json' };
+    }
+
+    if (typeof config !== 'object' || config === null || Array.isArray(config)) {
+      return { config: null, state: 'not-object' };
+    }
+    if (!('allowed' in config)) {
+      return { config: config, state: 'missing-allowed' };
+    }
+    if (
+      typeof config.allowed !== 'object' ||
+      config.allowed === null ||
+      Array.isArray(config.allowed)
+    ) {
+      return { config: config, state: 'invalid-allowed' };
+    }
+
+    return { config: config, state: null };
+  }
+
+  /**
+   * Vytvoří hlášku podle stavu konfigurace a výsledku toolbaru.
+   *
+   * @returns {HTMLElement|null} element hlášky nebo null (vše v pořádku)
+   */
+  function buildNotice(state, allowed, buttonCount) {
+    if (buttonCount > 0) {
+      return null;
+    }
+
+    const notice = document.createElement('p');
+    notice.className = 'texyla-notice';
+
+    if (state === 'missing') {
+      notice.textContent =
+        'Konfigurace Texy nebyla načtena. Aplikace nepředala data-texyla-config. ' +
+        'Zkontrolujte, že aplikace předává nastavení Texy do textarey.';
+      return notice;
+    }
+
+    if (state === 'empty') {
+      notice.textContent =
+        'Konfigurace Texy je prázdná. Aplikace předala prázdný data-texyla-config. ' +
+        'Zkontrolujte, že aplikace generuje platný JSON.';
+      return notice;
+    }
+
+    if (state === 'invalid-json') {
+      notice.textContent =
+        'Konfigurace Texy je neplatná (data-texyla-config nelze parsovat jako JSON). ' +
+        'Zkontrolujte, že aplikace generuje platný JSON.';
+      return notice;
+    }
+
+    if (state === 'not-object') {
+      notice.textContent =
+        'Konfigurace Texy nemá správný tvar (očekáván objekt). ' +
+        'Zkontrolujte, že aplikace posílá objekt, ne pole ani skalární hodnotu.';
+      return notice;
+    }
+
+    if (state === 'missing-allowed') {
+      notice.textContent =
+        'Konfigurace Texy neobsahuje klíč "allowed". ' +
+        'Zkontrolujte, že aplikace předává allowed z Texy instance.';
+      return notice;
+    }
+
+    if (state === 'invalid-allowed') {
+      notice.textContent =
+        'Konfigurace Texy má neplatný klíč "allowed" (očekáván objekt). ' +
+        'Zkontrolujte, že aplikace posílá allowed jako objekt, ne pole ani skalár.';
+      return notice;
+    }
+
+    // state === null – config je v pořádku, ale toolbar je prázdný
+    const allowedKeys = Object.keys(allowed);
+    const allowedTrue = Object.values(allowed).some(function (v) { return v === true; });
+
+    if (allowedKeys.length === 0) {
+      notice.textContent =
+        'Konfigurace Texy neobsahuje žádné elementy v "allowed". ' +
+        'Zkontrolujte, že aplikace předává allowed z Texy instance.';
+    } else if (!allowedTrue) {
+      notice.textContent =
+        'Nastavení Texy je úplně vypnuto. Povolte v Texy to, co potřebujete, ' +
+        'a tlačítka se doplní do toolbaru.';
+    } else {
+      notice.textContent =
+        'Texy je nakonfigurovaná, ale pro povolené elementy nejsou v toolbaru ' +
+        'definována tlačítka. Zkontrolujte config/buttons.js a config/order.js.';
+    }
+
+    return notice;
   }
 
   // ---------------------------------------------------------------------------
   // Náhled
   // ---------------------------------------------------------------------------
 
-  function createPreviewUI(textarea, toolbar) {
+  function createPreviewUI(textarea, toolbar, notice) {
     const wrap = document.createElement('div');
     wrap.className = 'texyla-wrap';
 
@@ -204,12 +300,14 @@
 
     const parent = textarea.parentNode;
     parent.insertBefore(wrap, textarea);
-    wrap.appendChild(toolbar);
+
+    // místo toolbaru vložíme hlášku, pokud není co zobrazit
+    wrap.appendChild(notice || toolbar);
     wrap.appendChild(textarea);
     wrap.appendChild(btn);
     wrap.appendChild(preview);
 
-    return { btn: btn, preview: preview };
+    return { btn: btn, preview: preview, toolbar: toolbar, notice: notice };
   }
 
   async function fetchPreview(endpoint, source, config) {
@@ -236,29 +334,40 @@
     const endpoint = textarea.dataset.endpoint || 'texyla/texyla.php';
     const debug = textarea.dataset.debug === '1';
 
-    let config = {};
-    if (textarea.dataset.texylaConfig) {
-      try {
-        config = JSON.parse(textarea.dataset.texylaConfig);
-      } catch (e) {
-        console.warn('Texyla: neplatný data-texyla-config', e);
-        config = {};
-      }
-    }
+    // 1. Načtení a validace konfigurace
+    const parsed = parseConfig(textarea);
+    const config = parsed.config;
+    const configState = parsed.state;
 
-    const allowed = config.allowed || DEFAULT_ALLOWED;
+    const allowed = (configState === null && config && config.allowed)
+      ? config.allowed
+      : {};
 
+    // 2. Toolbar
+    const built = buildToolbar(allowed, textarea);
+    const toolbar = built.bar;
+    const buttonCount = built.count;
+
+    // 3. Hláška podle stavu
+    const notice = buildNotice(configState, allowed, buttonCount);
+
+    // 4. Téma
     loadTheme(theme);
 
-    const toolbar = buildToolbar(allowed, textarea);
-    const ui = createPreviewUI(textarea, toolbar);
+    // 5. UI
+    const ui = createPreviewUI(textarea, toolbar, notice);
     let showingPreview = false;
 
+    // 6. Náhled
     ui.btn.addEventListener('click', async function () {
       if (showingPreview) {
         ui.preview.hidden = true;
         textarea.hidden = false;
-        toolbar.hidden = false;
+        if (ui.notice) {
+          ui.notice.hidden = false;
+        } else {
+          ui.toolbar.hidden = false;
+        }
         ui.btn.textContent = 'Náhled';
         showingPreview = false;
         return;
@@ -288,7 +397,11 @@
         }
 
         textarea.hidden = true;
-        toolbar.hidden = true;
+        if (ui.notice) {
+          ui.notice.hidden = true;
+        } else {
+          ui.toolbar.hidden = true;
+        }
         ui.preview.hidden = false;
         ui.btn.textContent = 'Editovat';
         showingPreview = true;

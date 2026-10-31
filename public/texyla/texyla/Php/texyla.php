@@ -1,12 +1,19 @@
 <?php
 declare(strict_types=1);
 
-require_once(dirname(__FILE__) . '/helpers.php');
+define('TEXYLA_ENTRY', true);
+
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
+require_once __DIR__ . '/Src/helpers.php';
+require_once __DIR__ . '/Src/Config.php';
 
 header('Content-Type: text/html; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 
-
+// 1. Kontrola Texy
 $error = checkTexy();
 if ($error !== null) {
     http_response_code(500);
@@ -16,6 +23,7 @@ if ($error !== null) {
     exit;
 }
 
+// 2. Jen POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     header('Allow: POST');
@@ -23,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Kontrola validity JSON vstupu
+// 3. Parsování JSONu — JEDNOU
 $input = file_get_contents('php://input');
 $data = json_decode((string) $input, true);
 
@@ -33,34 +41,17 @@ if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
     exit;
 }
 
-$source  = (string) ($data['texy_source'] ?? '');
-$profile = (string) ($data['profile'] ?? $data['context'] ?? 'default');
-
-$allowed = ['admin', 'forum', 'codeforum', 'default'];
-if (!in_array($profile, $allowed, true)) {
-    $profile = 'default';
-}
-
-if ($source === '') {
-    exit; // Vrací prázdný řetězec s kódem 200
-}
-
-// Načtení továrny až ve chvíli, kdy máme validní data
-require_once __DIR__ . '/src/Factory/TexyFactory.php';
-
-require_once __DIR__ . '/src/Config.php'; // nebo přes autoload
-
-$data = json_decode(file_get_contents('php://input') ?: '[]', true) ?? [];
 $source = (string) ($data['texy_source'] ?? '');
 $config = is_array($data['config'] ?? null) ? $data['config'] : [];
 
-$texy = new \Texy\Texy();          // slepá instance
-\Texyla\Config::apply($texy, $config); // jen validované nastavení
+if ($source === '') {
+    exit; // prázdný výstup, 200
+}
 
-echo $texy->process($source);
-
+// 4. Slepá instance + aplikace configu
 try {
-    $texy = \Texyla\Factory\TexyFactory::createForProfile($profile);
+    $texy = new \Texy\Texy();
+    \Texyla\Config::apply($texy, $config);
     echo $texy->process($source);
 } catch (Throwable $e) {
     http_response_code(500);

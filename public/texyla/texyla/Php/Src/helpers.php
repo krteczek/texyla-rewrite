@@ -1,13 +1,20 @@
 <?php
 declare(strict_types=1);
 
+if (!defined('TEXYLA_ENTRY')) {
+    http_response_code(404);
+    exit;
+}
+
+/**
+ * Načte Composer autoload. Hledá vendor/autoload.php o několik úrovní výš.
+ */
 function loadAutoload(): bool
 {
     foreach ([
-        __DIR__ . '/../vendor/autoload.php',
-        __DIR__ . '/../../vendor/autoload.php',
         __DIR__ . '/../../../vendor/autoload.php',
         __DIR__ . '/../../../../vendor/autoload.php',
+        __DIR__ . '/../../../../../vendor/autoload.php',
     ] as $path) {
         if (is_file($path)) {
             require_once $path;
@@ -17,6 +24,10 @@ function loadAutoload(): bool
     return false;
 }
 
+/**
+ * Zkontroluje, zda je Texy dostupná.
+ * Vrací null, pokud je vše v pořádku, jinak chybovou hlášku.
+ */
 function checkTexy(): ?string
 {
     if (!loadAutoload()) {

@@ -1,0 +1,85 @@
+### Hlavní nadpis
+
+## Podnadpis
+
+**Tučný text**, *kurzíva*, ***tučná kurzíva***, `inline kód`.
+
+Horní index: 2^^10^^, dolní index: H__2__O.
+
+Odkaz s popiskem: "Texy oficiálně":[https://texy.info]
+Holý odkaz: https://texy.info
+Email: someone@example.com
+
+
+> Toto je citace.
+> Druhý řádek citace.
+> "Autor citace"
+
+
+"(cite=https://wikipedia.org)
+Kdo chce hýbat světem, musí nejprve pohnout sám sebou.
+" -- Sokrates
+
+
+Neuspořádaný seznam:
+
+- první položka
+- druhá **s tučným**
+- třetí s odkazem "sem":[https://example.com]
+  - vnořená A
+  - vnořená B
+
+Číslovaný seznam:
+
+1) jedna
+2) dvě
+3) tři
+
+Definice:
+
+termín:
+  - vysvětlení jedna
+  - vysvětlení dvě
+
+
+Příklad tabulky:
+
+| Jméno | Věk | Město
+|-------|-----|------
+| Ana   |  28 | Praha
+| Bořek |  35 | Brno
+
+Horizontální čára:
+
+---
+
+Blok kódu (ploténková syntax):
+
+/---code php
+<?php
+echo "Ahoj z Texy";
+$x = 1 + 2;
+\---
+
+Alternativní code fence:
+/---
+function hello() {
+return "world";
+}
+\---
+
+Obrázek (admin):
+
+[* https://texy.deegee.dev/favicon.ico .(Logo Texy) *]
+
+Obrázek s odkazem:
+
+[* https://texy.deegee.dev/favicon.ico .(Logo) *]:[https://texy.info]
+
+Dlouhý odstavec s typografií: "uvozovky", pomlčka - ať se projeví, výpustka..., násobení 5 x 3, nezlomitelná mezera u jednotek 10 kg.
+
+kód
+uvnitř
+fence
+
+Konec testu.
