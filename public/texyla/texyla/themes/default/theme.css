@@ -1,6 +1,6 @@
 /* Texyla – default theme */
 
-.texyla-wrap {
+.texyla-theme-default {
   --texyla-border: #cbd5e0;
   --texyla-border-focus: #4299e1;
   --texyla-toolbar-bg: #edf2f7;
@@ -24,7 +24,7 @@
 }
 
 /* Toolbar */
-.texyla-toolbar {
+.texyla-theme-default .texyla-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
@@ -35,7 +35,7 @@
   border-radius: var(--texyla-radius) var(--texyla-radius) 0 0;
 }
 
-.texyla-toolbar__btn {
+.texyla-theme-default .texyla-toolbar__btn {
   min-width: 2.25rem;
   min-height: 2.25rem;
   padding: 0.25rem 0.5rem;
@@ -48,17 +48,17 @@
   background: var(--texyla-btn-bg);
 }
 
-.texyla-toolbar__btn:hover {
+.texyla-theme-default .texyla-toolbar__btn:hover {
   background: var(--texyla-btn-hover);
 }
 
-.texyla-toolbar__btn:focus-visible {
+.texyla-theme-default .texyla-toolbar__btn:focus-visible {
   outline: 2px solid var(--texyla-border-focus);
   outline-offset: 1px;
 }
 
 /* Textarea */
-.texyla-wrap textarea.texyla {
+.texyla-theme-default textarea.texyla {
   display: block;
   width: 100%;
   min-height: 12rem;
@@ -74,14 +74,14 @@
   resize: vertical;
 }
 
-.texyla-wrap textarea.texyla:focus {
+.texyla-theme-default textarea.texyla:focus {
   outline: none;
   border-color: var(--texyla-border-focus);
   box-shadow: 0 0 0 3px var(--texyla-focus-ring);
 }
 
 /* Preview button */
-.texyla-preview-btn {
+.texyla-theme-default .texyla-preview-btn {
   margin-top: 0.5rem;
   padding: 0.4rem 0.9rem;
   font-size: 0.875rem;
@@ -92,17 +92,17 @@
   background: var(--texyla-toolbar-bg);
 }
 
-.texyla-preview-btn:hover:not(:disabled) {
+.texyla-theme-default .texyla-preview-btn:hover:not(:disabled) {
   background: var(--texyla-btn-hover);
 }
 
-.texyla-preview-btn:disabled {
+.texyla-theme-default .texyla-preview-btn:disabled {
   opacity: 0.6;
   cursor: wait;
 }
 
 /* Preview panel */
-.texyla-preview {
+.texyla-theme-default .texyla-preview {
   margin-top: 0.75rem;
   padding: 1rem;
   line-height: 1.6;
@@ -111,28 +111,28 @@
   background: var(--texyla-preview-bg);
 }
 
-.texyla-preview-rendered > *:first-child {
+.texyla-theme-default .texyla-preview-rendered > *:first-child {
   margin-top: 0;
 }
 
-.texyla-preview-rendered > *:last-child {
+.texyla-theme-default .texyla-preview-rendered > *:last-child {
   margin-bottom: 0;
 }
 
-.texyla-empty {
+.texyla-theme-default .texyla-empty {
   margin: 0;
   color: var(--texyla-muted);
   font-style: italic;
 }
 
 /* Debug HTML */
-.texyla-preview-source-label {
+.texyla-theme-default .texyla-preview-source-label {
   margin: 1rem 0 0.25rem;
   font-size: 0.8rem;
   color: var(--texyla-muted);
 }
 
-.texyla-preview-source {
+.texyla-theme-default .texyla-preview-source {
   margin: 0;
   padding: 0.75rem;
   overflow-x: auto;
@@ -146,7 +146,7 @@
 }
 
 /* Errors */
-.texyla-error {
+.texyla-theme-default .texyla-error {
   padding: 0.75rem 1rem;
   color: var(--texyla-danger-text);
   background: var(--texyla-danger-bg);
@@ -154,17 +154,17 @@
   border-radius: var(--texyla-radius);
 }
 
-.texyla-error p {
+.texyla-theme-default .texyla-error p {
   margin: 0 0 0.25rem;
   font-weight: 600;
 }
 
-.texyla-error small {
+.texyla-theme-default .texyla-error small {
   font-size: 0.8rem;
 }
 
 /* Legacy browser notice */
-.texyla-legacy-notice {
+.texyla-theme-default .texyla-legacy-notice {
   margin: 0 0 0.5rem;
   padding: 0.6rem 0.75rem;
   font-size: 0.875rem;
@@ -176,7 +176,7 @@
 }
 
 /* Hláška místo toolbaru (prázdné / chybějící nastavení) */
-.texyla-notice {
+.texyla-theme-default .texyla-notice {
   margin: 0;
   padding: 0.6rem 0.75rem;
   font-size: 0.875rem;

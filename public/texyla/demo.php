@@ -86,6 +86,8 @@ $text = file_get_contents(__DIR__ . '/demo.txt');
     <meta charset="utf-8">
     <title>Texyla – demo (<?= htmlspecialchars($profile, ENT_QUOTES, 'UTF-8') ?>)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./texyla/themes/default/theme.css?v=<?= filemtime(__DIR__ . '/texyla/themes/default/theme.css') ?>">
+    <link rel="stylesheet" href="./texyla/themes/classic/theme.css?v=<?= filemtime(__DIR__ . '/texyla/themes/classic/theme.css') ?>">
 </head>
 <body>
     <h1><a href="./demo.php">Texyla demo — profil: <?= htmlspecialchars($profile, ENT_QUOTES, 'UTF-8') ?></a></h1>
@@ -101,6 +103,16 @@ $text = file_get_contents(__DIR__ . '/demo.txt');
             data-texyla-config='<?= \Texyla\Config::toJson($config) ?>'
             data-endpoint="./texyla/Php/texyla.php"
             data-theme="default"
+            rows="12"
+        ><?= htmlspecialchars($text, ENT_QUOTES, 'UTF-8') ?></textarea>
+    </div>
+
+    <div>
+        <textarea
+            class="texyla"
+            data-texyla-config='<?= \Texyla\Config::toJson($config) ?>'
+            data-endpoint="./texyla/Php/texyla.php"
+            data-theme="classic"
             rows="12"
         ><?= htmlspecialchars($text, ENT_QUOTES, 'UTF-8') ?></textarea>
     </div>

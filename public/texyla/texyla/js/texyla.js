@@ -129,6 +129,28 @@
 
     textarea.value = value.slice(0, start) + insert + value.slice(end);
     textarea.focus();
+
+    // 1. Nastavíme kurzor na správnou pozici
+    textarea.setSelectionRange(cursor, cursor);
+
+    // 2. Ručně posuneme scrollbar, aby byl kurzor vidět (funguje i ve Falkonu)
+    //    Trik: dočasně zkrátíme text, zjistíme výšku, obnovíme a scrollujeme.
+    const fullText = textarea.value;
+    textarea.value = fullText.substring(0, cursor);
+    const scrollHeight = textarea.scrollHeight;
+    textarea.value = fullText;
+
+    // Posuneme se tak, aby byl kurzor zhruba uprostřed viditelné oblasti
+    let scrollTop = scrollHeight;
+    const textareaHeight = textarea.clientHeight;
+    if (scrollTop > textareaHeight) {
+        scrollTop -= textareaHeight / 2;
+    } else {
+        scrollTop = 0;
+    }
+    textarea.scrollTop = scrollTop;
+
+    // 3. Znovu nastavíme výběr (pro jistotu, protože jsme měnili hodnotu)
     textarea.setSelectionRange(cursor, cursor);
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   }
@@ -295,9 +317,9 @@
   // Náhled
   // ---------------------------------------------------------------------------
 
-  function createPreviewUI(textarea, toolbar, notice) {
+  function createPreviewUI(textarea, toolbar, notice, theme) {
     const wrap = document.createElement('div');
-    wrap.className = 'texyla-wrap';
+    wrap.className = 'texyla-wrap texyla-theme-' + theme;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -317,7 +339,7 @@
     wrap.appendChild(preview);
 
     return { btn: btn, preview: preview, toolbar: toolbar, notice: notice };
-  }
+}
 
   async function fetchPreview(endpoint, source, config) {
     const res = await fetch(endpoint, {
@@ -337,8 +359,7 @@
   // ---------------------------------------------------------------------------
   // Inicializace jedné textarey
   // ---------------------------------------------------------------------------
-
-  function init(textarea) {
+function init(textarea) {
     const theme = textarea.dataset.theme || 'default';
     const endpoint = textarea.dataset.endpoint || 'texyla/texyla.php';
     const debug = textarea.dataset.debug === '1';
@@ -348,8 +369,8 @@
     const configState = parsed.state;
 
     const allowed = (configState === null && config && config.allowed)
-      ? config.allowed
-      : {};
+        ? config.allowed
+        : {};
 
     const built = buildToolbar(allowed, textarea);
     const toolbar = built.bar;
@@ -357,9 +378,10 @@
 
     const notice = buildNotice(configState, allowed, buttonCount);
 
-    loadTheme(theme);
+    // textarea.classList.add('texyla-theme-' + theme);  ← smazat
 
-    const ui = createPreviewUI(textarea, toolbar, notice);
+    const ui = createPreviewUI(textarea, toolbar, notice, theme);
+
     let showingPreview = false;
 
     ui.btn.addEventListener('click', async function () {

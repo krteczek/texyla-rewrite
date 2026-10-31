@@ -1,0 +1,185 @@
+/* Texyla classic – inspirace janmarek/Texyla + jQuery UI éra */
+
+.texyla-theme-classic {
+  --texyla-bg: #eee;
+  --texyla-border: #aaa;
+  --texyla-border-light: #ccc;
+  --texyla-toolbar-h: 30px;
+  --texyla-btn: 28px;
+  --texyla-text: #222;
+  --texyla-muted: #666;
+  --texyla-preview-bg: #fff;
+  --texyla-focus: #3875d7;
+  --texyla-danger-bg: #fdd;
+  --texyla-danger-text: #800;
+  --texyla-warn-bg: #ffc;
+  --texyla-warn-text: #660;
+  --texyla-warn-border: #cc0;
+
+  max-width: 48rem;
+  margin: 1em 0;
+  padding: 4px;
+  background: var(--texyla-bg);
+  border: 1px solid var(--texyla-border-light);
+  color: var(--texyla-text);
+  font: 13px/1.4 Tahoma, Verdana, Arial, sans-serif;
+}
+
+/* Toolbar – 30px lišta jako původní */
+.texyla-theme-classic .texyla-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-height: var(--texyla-toolbar-h);
+  margin: 0;
+  padding: 0 0 0 4px;
+  background: var(--texyla-bg);
+  border: none;
+}
+
+.texyla-theme-classic .texyla-toolbar__btn {
+  box-sizing: border-box;
+  width: var(--texyla-btn);
+  height: var(--texyla-btn);
+  min-width: var(--texyla-btn);
+  min-height: var(--texyla-btn);
+  margin: 1px;
+  padding: 0;
+  font: 12px/1 Tahoma, Verdana, Arial, sans-serif;
+  color: var(--texyla-text);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+}
+
+.texyla-theme-classic .texyla-toolbar__btn:hover {
+  border-color: var(--texyla-border);
+  background: linear-gradient(to bottom, #fff 0%, #e8e8e8 100%);
+}
+
+.texyla-theme-classic .texyla-toolbar__btn:active {
+  background: #ddd;
+  border-color: #999;
+}
+
+.texyla-theme-classic .texyla-toolbar__btn:focus-visible {
+  outline: 1px dotted var(--texyla-focus);
+}
+
+/* Textarea */
+.texyla-theme-classic textarea.texyla {
+  display: block;
+  width: 100%;
+  min-height: 12em;
+  box-sizing: border-box;
+  margin: 4px 0;
+  padding: 6px 8px;
+  font: 13px/1.45 'Courier New', Courier, monospace;
+  color: var(--texyla-text);
+  border: 1px solid var(--texyla-border);
+  border-radius: 0;
+  background: #fff;
+  resize: vertical;
+}
+
+.texyla-theme-classic textarea.texyla:focus {
+  outline: none;
+  border-color: var(--texyla-focus);
+  box-shadow: 0 0 0 3px var(--texyla-focus-ring);
+}
+
+/* Spodní tlačítko náhledu – jako bottom-toolbar */
+.texyla-theme-classic .texyla-preview-btn {
+  display: inline-block;
+  margin: 0 4px 4px 0;
+  padding: 0 0.6em;
+  line-height: 28px;
+  font: 12px/28px Tahoma, Verdana, Arial, sans-serif;
+  color: var(--texyla-text);
+  cursor: pointer;
+  border: 1px solid var(--texyla-border);
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #fafafa 0%, #e4e4e4 100%);
+}
+
+.texyla-theme-classic .texyla-preview-btn:hover:not(:disabled) {
+  border-color: #888;
+  background: linear-gradient(to bottom, #fff 0%, #ebebeb 100%);
+}
+
+.texyla-theme-classic .texyla-preview-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+/* Náhled */
+.texyla-theme-classic .texyla-preview {
+  margin: 4px 0 0;
+  padding: 10px;
+  overflow: auto;
+  line-height: 1.5;
+  border: 1px solid var(--texyla-border);
+  background: var(--texyla-preview-bg);
+}
+
+.texyla-theme-classic .texyla-preview-rendered > *:first-child { margin-top: 0; }
+.texyla-theme-classic .texyla-preview-rendered > *:last-child { margin-bottom: 0; }
+
+.texyla-theme-classic .texyla-empty {
+  margin: 0;
+  color: var(--texyla-muted);
+  font-style: italic;
+}
+
+.texyla-theme-classic .texyla-preview-source-label {
+  margin: 10px 0 4px;
+  font-size: 11px;
+  color: var(--texyla-muted);
+}
+
+.texyla-theme-classic .texyla-preview-source {
+  margin: 0;
+  padding: 8px;
+  overflow-x: auto;
+  font: 11px/1.4 Consolas, 'Courier New', monospace;
+  color: #ddd;
+  background: #222;
+  border: 1px solid #000;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.texyla-theme-classic .texyla-error {
+  padding: 8px 10px;
+  color: var(--texyla-danger-text);
+  background: var(--texyla-danger-bg);
+  border: 1px solid #c66;
+}
+
+.texyla-theme-classic .texyla-error p { margin: 0 0 4px; font-weight: bold; }
+.texyla-theme-classic .texyla-error small { font-size: 11px; }
+
+.texyla-theme-classic .texyla-legacy-notice {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--texyla-warn-text);
+  background: var(--texyla-warn-bg);
+  border: 1px solid var(--texyla-warn-border);
+}
+
+/* Hláška místo toolbaru (prázdné / chybějící nastavení) */
+.texyla-theme-classic .texyla-notice {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--texyla-warn-text);
+  background: var(--texyla-warn-bg);
+  border: 1px solid var(--texyla-warn-border);
+  border-bottom: none;
+  border-radius: var(--texyla-radius) var(--texyla-radius) 0 0;
+}
